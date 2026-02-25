@@ -656,6 +656,27 @@
   <div class="upload-card">
     <h2>📋 엑셀 파일 업로드</h2>
 
+    <!-- 저장된 단어 배너 -->
+    <div id="saved-banner" style="display:none;
+      background:#eef7e4; border:1.5px solid var(--green-light);
+      border-radius:12px; padding:12px 16px; margin-bottom:16px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div style="font-size:0.85rem; color:var(--green-dark);">
+        💾 <strong id="saved-file-name"></strong> 저장됨
+        <span style="color:var(--text-light); font-weight:400;"> — 상 <span id="saved-sang"></span>개 / 중 <span id="saved-jung"></span>개 / 하 <span id="saved-ha"></span>개</span>
+      </div>
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button onclick="loadSavedData()"
+          style="background:var(--green-btn); color:var(--green-text); border:none;
+                 border-radius:8px; padding:7px 14px; font-size:0.82rem; font-weight:700;
+                 font-family:'Noto Sans KR',sans-serif; cursor:pointer;">불러오기</button>
+        <button onclick="clearSavedData()"
+          style="background:none; border:1.5px solid #ddd; border-radius:8px;
+                 padding:7px 10px; font-size:0.82rem; color:var(--text-light);
+                 font-family:'Noto Sans KR',sans-serif; cursor:pointer;">삭제</button>
+      </div>
+    </div>
+
     <div class="excel-format">
       <p>엑셀 파일 형식 (A열: 상 / B열: 중 / C열: 하)</p>
       <div class="excel-cols">
@@ -871,6 +892,57 @@ function changeCount(key, delta) {
   });
 }
 
+// ── localStorage 저장 단어 관리 ──
+function initSavedBanner() {
+  try {
+    const saved = localStorage.getItem('gana_wordData');
+    const savedName = localStorage.getItem('gana_fileName');
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const banner = document.getElementById('saved-banner');
+    banner.style.display = 'flex';
+    document.getElementById('saved-file-name').textContent = savedName || '이전 파일';
+    document.getElementById('saved-sang').textContent = data.sang?.length || 0;
+    document.getElementById('saved-jung').textContent = data.jung?.length || 0;
+    document.getElementById('saved-ha').textContent  = data.ha?.length  || 0;
+  } catch(e) {}
+}
+
+function loadSavedData() {
+  try {
+    const saved = localStorage.getItem('gana_wordData');
+    const savedName = localStorage.getItem('gana_fileName');
+    if (!saved) return;
+    wordData = JSON.parse(saved);
+    const ok = wordData.sang.length >= counts.sang
+            && wordData.jung.length >= counts.jung
+            && wordData.ha.length  >= counts.ha;
+    const status = document.getElementById('file-status');
+    const replaceRow = document.getElementById('file-replace-row');
+    if (!ok) {
+      status.style.color = '#e74c3c';
+      status.textContent = `⚠️ 저장 데이터: 상 ${wordData.sang.length}개, 중 ${wordData.jung.length}개, 하 ${wordData.ha.length}개 (설정: 상 ${counts.sang}/중 ${counts.jung}/하 ${counts.ha}개 필요)`;
+      document.getElementById('generate-btn').disabled = true;
+    } else {
+      status.style.color = 'var(--green-dark)';
+      status.textContent = `✅ ${savedName || '저장된 파일'} — 상 ${wordData.sang.length}개, 중 ${wordData.jung.length}개, 하 ${wordData.ha.length}개`;
+      document.getElementById('generate-btn').disabled = false;
+      const dz = document.getElementById('drop-zone');
+      dz.style.padding = '14px 20px';
+      dz.querySelector('.icon').style.display = 'none';
+      dz.querySelector('p').textContent = '저장된 파일을 불러왔습니다';
+      replaceRow.style.display = 'block';
+    }
+    document.getElementById('saved-banner').style.display = 'none';
+  } catch(e) {}
+}
+
+function clearSavedData() {
+  localStorage.removeItem('gana_wordData');
+  localStorage.removeItem('gana_fileName');
+  document.getElementById('saved-banner').style.display = 'none';
+}
+
 // ── 화면 전환 ──
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -885,6 +957,7 @@ function goToUpload() {
     alert('단어 수를 1개 이상 설정해주세요.'); return;
   }
   showScreen('upload-screen');
+  initSavedBanner();
 }
 function goToSettings() {
   // 드롭존 초기화
@@ -950,6 +1023,13 @@ function handleFile(file) {
       dz.querySelector('.icon').style.display = 'none';
       dz.querySelector('p').textContent = '파일이 업로드되었습니다';
       replaceRow.style.display = 'block';
+      // localStorage에 저장
+      try {
+        localStorage.setItem('gana_wordData', JSON.stringify(wordData));
+        localStorage.setItem('gana_fileName', file.name);
+        const savedBanner = document.getElementById('saved-banner');
+        if (savedBanner) savedBanner.style.display = 'none';
+      } catch(e) {}
     }
   };
   reader.readAsBinaryString(file);
