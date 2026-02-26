@@ -217,7 +217,7 @@
   /* ── 테스트 화면 ── */
   #test-screen {
     display: none;
-    padding: 2vh 8vw;
+    padding: 2vh 8vw 10vh;
     width: 100%; height: 100vh;
     box-sizing: border-box;
     flex-direction: column;
@@ -299,7 +299,11 @@
     color: var(--green-text); line-height: 1.2; text-align: center;
   }
 
-  .btn-row { display: flex; justify-content: center; margin-top: 1.5vh; flex-shrink: 0; }
+  .blank-badge {
+    color: transparent !important;
+  }
+  .blank-card {
+  }
 
   .btn-click-here {
     background: var(--green-btn); color: var(--green-text); border: none;
@@ -307,9 +311,11 @@
     font-size: clamp(0.9rem, 1.8vw, 1.1rem); font-weight: 700;
     font-family: 'Noto Sans KR', sans-serif; cursor: pointer;
     transition: background 0.2s, transform 0.1s; letter-spacing: 0.5px;
+    position: fixed; bottom: 2.5vh; left: 50%; transform: translateX(-50%);
+    z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
   .btn-click-here:hover { background: #b0cc98; color: var(--green-text); }
-  .btn-click-here:active { transform: scale(0.97); }
+  .btn-click-here:active { transform: translateX(-50%) scale(0.97); }
 
   /* ── 행 선택 버튼 ── */
   .row-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
@@ -733,7 +739,7 @@
   </div>
 
   <div class="btn-row">
-    <button class="btn-click-here" onclick="generateTest()">Click Here</button>
+    <button class="btn-click-here" onclick="revealTest()">Click Here</button>
   </div>
 </div>
 
@@ -1045,23 +1051,57 @@ function pick(arr, n) {
   return result;
 }
 
-// ── 문제 생성 ──
+// ── 문제 생성 (초기 빈 화면) ──
 function generateTest() {
   if (selectedFrontRows.length === 0) {
     alert('첫 번째 행을 1개 이상 선택해주세요.');
     return;
   }
+
+  // Q1 배지 — 빈칸으로
+  document.getElementById('q1-badges-inline').innerHTML =
+    `<span class="row-badge-inline blank-badge">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+     <span class="row-badge-inline blank-badge">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>`;
+
+  // Q2 단어 카드 — 빈칸으로
+  const total = counts.sang + counts.jung + counts.ha;
+  const nums = ['①','②','③','④','⑤','⑥','⑦','⑧'];
+  const gridEl = document.getElementById('q2-word-grid');
+  gridEl.innerHTML = '';
+  gridEl.className = 'word-grid';
+  if (total <= 2) gridEl.classList.add('cols-2');
+  else if (total === 3) gridEl.classList.add('cols-3');
+  else if (total === 4) gridEl.classList.add('cols-4');
+
+  for (let i = 0; i < total; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'word-card-wrap';
+    wrap.innerHTML = `
+      <div class="word-num">${nums[i] || (i+1)}</div>
+      <div class="word-card blank-card"><div class="word-korean"></div></div>
+    `;
+    gridEl.appendChild(wrap);
+  }
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('test-screen').style.display = 'flex';
+  window.scrollTo(0, 0);
+}
+
+// ── Click Here → 랜덤 내용 채우기 ──
+function revealTest() {
   const currentRows = ROWS_MAP[currentScript];
   const frontPool = selectedFrontRows.map(name => ({name}));
   const frontRow = pick(frontPool, 1)[0];
   const backPool = currentRows.filter(r => !selectedFrontRows.includes(r)).map(name => ({name}));
   const backRow = backPool.length > 0 ? pick(backPool, 1)[0] : {name: '—'};
 
+  // Q1 배지 채우기
   document.getElementById('q1-badges-inline').innerHTML =
     `<span class="row-badge-inline ${frontRow.name.length > 2 ? 'long' : ''}">${frontRow.name}</span>
      <span class="row-badge-inline ${backRow.name.length > 2 ? 'long' : ''}">${backRow.name}</span>`;
 
-  // 하(쉬움) → 중 → 상(어려움) 순서로 배치, 각 그룹 내에서는 랜덤
+  // Q2 단어 채우기
   const allWords = [
     ...pick(wordData.ha,   counts.ha),
     ...pick(wordData.jung, counts.jung),
@@ -1086,10 +1126,6 @@ function generateTest() {
     `;
     gridEl.appendChild(wrap);
   });
-
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('test-screen').style.display = 'flex';
-  window.scrollTo(0, 0);
 }
 </script>
 </body>
