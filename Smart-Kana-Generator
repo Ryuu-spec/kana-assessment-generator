@@ -1,123 +1,73 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>가나비 — 디지털 수행평가</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-  /* 신수현 님 원본 레이아웃 및 폰트 설정 엄수 */
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-  :root { --bg: #f5f2e8; --card: #ffffff; --green-point: #c8ddb0; --green-dark: #5a8a3c; }
+/* ── 신수현 님의 원본 스크립트 기반: 랜덤 로직 완결본 ── */
+
+// 1. 문제 생성하기 (generateTest) 함수
+function generateTest() {
+  // 1번 문제: 선택된 행들 중 1개 랜덤 + 나머지 중 1개 랜덤
+  const currentRows = ROWS_MAP[currentScript] || ALL_ROWS;
   
-  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-  .screen { display: none; width: 100%; max-width: 900px; padding: 20px; flex-direction: column; align-items: center; }
-  .screen.active { display: flex !important; }
+  // 첫 번째 행: 사용자가 버튼으로 선택한 리스트(selectedFrontRows) 중 1개 랜덤 추출
+  const firstRowIdx = Math.floor(Math.random() * selectedFrontRows.length);
+  const row1 = selectedFrontRows[firstRowIdx];
 
-  /* 캡처 이미지 기반 메인 타이틀 */
-  .main-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 30px; color: #333; }
+  // 두 번째 행: 전체 행 중 첫 번째 행을 제외하고 1개 랜덤 추출
+  const secondPool = currentRows.filter(r => r !== row1);
+  const row2 = secondPool[Math.floor(Math.random() * secondPool.length)];
+
+  // 1번 문제 UI 업데이트 (님의 row-badge-inline 스타일 유지)
+  const q1Badges = document.getElementById('q1-badges-inline');
+  q1Badges.innerHTML = `
+    <span class="row-badge-inline">${row1}</span>
+    <span class="row-badge-inline">${row2}</span>
+  `;
+
+  // 2번 문제: 엑셀에서 불러온 wordData를 난이도별(sang, jung, ha) 셔플 후 개수만큼 추출
+  const finalWords = [
+    ...shuffleArray(wordData.sang).slice(0, counts.sang),
+    ...shuffleArray(wordData.jung).slice(0, counts.jung),
+    ...shuffleArray(wordData.ha).slice(0, counts.ha)
+  ];
   
-  .test-card { background: var(--card); border-radius: 25px; padding: 40px; width: 100%; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+  // 님의 word-grid UI에 단어 배치
+  const grid = document.getElementById('q2-word-grid');
+  // 단어 개수에 따라 그리드 컬럼 자동 조정 (님의 CSS 클래스 활용)
+  const totalCount = finalWords.length;
+  grid.className = `word-grid cols-${totalCount > 4 ? 5 : totalCount}`;
   
-  /* 문항 번호 및 행 표시 스타일 */
-  .q-num { background: var(--green-point); color: var(--green-dark); width: 40px; height: 40px; display: inline-flex; justify-content: center; align-items: center; border-radius: 8px; font-weight: 900; margin-right: 15px; }
-  .q-text { font-size: 1.8rem; font-weight: 700; color: #444; }
-  .row-circle { background: var(--green-point); color: var(--green-dark); padding: 15px 25px; border-radius: 50%; font-weight: 900; font-size: 1.5rem; margin: 0 10px; display: inline-block; }
-
-  /* 4분할 랜덤 단어 영역 */
-  .word-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 25px; }
-  .word-box { border: 2px solid #eeeeee; border-radius: 15px; padding: 30px 10px; text-align: center; background: #fdfdfd; }
-  .word-label { display: block; font-size: 1.6rem; font-weight: 900; color: #333; margin-bottom: 15px; }
-  .word-input { width: 80%; border: none; border-bottom: 2px solid var(--green-point); text-align: center; font-size: 1.2rem; outline: none; }
-
-  /* 하단 실행 버튼 */
-  .click-here { background: var(--green-point); border: none; border-radius: 12px; padding: 15px 80px; font-size: 1.2rem; font-weight: 700; color: var(--green-dark); cursor: pointer; margin-top: 20px; }
-  
-  /* 관리자 숨김 버튼 (우측 상단 작게) */
-  .admin-trigger { position: absolute; top: 10px; right: 10px; opacity: 0.1; cursor: pointer; }
-</style>
-</head>
-<body>
-
-<div id="test-screen" class="screen active">
-  <h1 class="main-title">히라가나 쓰기</h1>
-  
-  <div class="test-card">
-    <div>
-      <span class="q-num">1</span>
-      <span class="q-text">히라가나 <span class="row-circle">타행</span> <span class="row-circle">라행</span> 에 해당하는 10자를 쓰시오.</span>
-    </div>
-  </div>
-
-  <div class="test-card">
-    <div>
-      <span class="q-num">2</span>
-      <span class="q-text">다음 단어에 해당하는 일본어를 히라가나로 쓰시오.</span>
-    </div>
-    <div class="word-grid" id="random-word-area">
-      <div class="word-box"><span class="word-label">책</span><input type="text" class="word-input"></div>
-      <div class="word-box"><span class="word-label">가족</span><input type="text" class="word-input"></div>
-      <div class="word-box"><span class="word-label">병원</span><input type="text" class="word-input"></div>
-      <div class="word-box"><span class="word-label">우표</span><input type="text" class="word-input"></div>
-    </div>
-  </div>
-
-  <button class="click-here" onclick="gradeTest()">Click Here</button>
-  <div class="admin-trigger" onclick="showAdmin()">●</div>
-</div>
-
-<div id="admin-screen" class="screen">
-  <div class="test-card" style="text-align:center;">
-    <h1 class="main-title">가나비 AI 에디터</h1>
-    <p>엑셀 어휘표를 기반으로 반별 랜덤 시험을 생성합니다.</p>
-    <input type="file" id="excel-input" accept=".xlsx" onchange="loadExcel(this)" style="margin-top:20px;">
-    <button class="click-here" onclick="showScreen('test-screen')">시험 화면으로</button>
-  </div>
-</div>
-
-<script>
-let wordPool = [
-  {ko: "책", ja: "ほん"}, {ko: "가족", ja: "かぞく"}, 
-  {ko: "병원", ja: "びょういん"}, {ko: "우표", ja: "きって"}
-];
-
-// 초기 실행 시 랜덤 단어 배치
-function initRandom() {
-  const area = document.getElementById('random-word-area');
-  const shuffled = wordPool.sort(() => 0.5 - Math.random()).slice(0, 4);
-  area.innerHTML = shuffled.map((w, i) => `
-    <div class="word-box">
-      <div style="color:var(--green-dark); font-size:0.8rem; margin-bottom:5px;">①</div>
-      <span class="word-label">${w.ko}</span>
-      <input type="text" class="word-input" id="ans-${i}">
+  grid.innerHTML = finalWords.map((word, i) => `
+    <div class="word-card-wrap">
+      <div class="word-num">①</div>
+      <div class="word-card">
+        <div class="word-korean">${word.k}</div>
+      </div>
     </div>
   `).join('');
+
+  // 화면 전환 (설정 -> 테스트 화면)
+  showScreen('test-screen');
 }
 
-function loadExcel(input) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = new Uint8Array(e.target.result);
-    const wb = XLSX.read(data, {type: 'array'});
-    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-    wordPool = json.filter(r => r[0] && r[1]).map(r => ({ja: r[0], ko: r[1]}));
-    alert('AI 데이터 로드 완료! 반별 랜덤 셋팅이 준비되었습니다.');
-    initRandom();
-  };
-  reader.readAsArrayBuffer(input.files[0]);
+// 2. 배열을 무작위로 섞는 유틸리티 (반별 랜덤의 핵심)
+function shuffleArray(array) {
+  const newArr = [...array];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
 }
 
-function gradeTest() {
-  alert("AI 채점 시스템으로 데이터를 전송합니다.");
-  // 님께서 구상하신 채점 로직 연결 부위
-}
-
-function showAdmin() { showScreen('admin-screen'); }
-function showScreen(id) {
+// 3. 화면 전환 함수 (님의 screen.active 로직 준수)
+function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const target = document.getElementById(screenId);
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'flex'; // 님의 CSS flex 로직 적용
+  }
 }
 
-window.onload = initRandom;
-</script>
-</body>
-</html>
+// 4. Reveal Test (님의 Click Here 버튼 기능)
+function revealTest() {
+  alert("AI 채점 및 결과 분석 페이지로 이동합니다.");
+  // 님께서 추후 연결하실 '가나비 AI 엔진' 연동 부위
+}
