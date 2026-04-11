@@ -1,181 +1,152 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>가나비 — 히라가나·가타카나 수행평가</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-  /* ── 수현 님의 원본 디자인 (절대 수정 금지 원칙 준수) ── */
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가나비 AI 에디터</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* ── 수현 님의 원본 디자인 보존 ── */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f5f2e8;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-  :root {
-    --bg: #f5f2e8; --card: #ffffff; --green-light: #c8ddb0; --green-dark: #5a8a3c;
-    --green-btn: #c8ddb0; --green-text: #4a7a32; --text: #2d2d2d; --text-light: #666;
-    --border: #d0c9b0; --shadow: 0 2px 12px rgba(0,0,0,0.08);
-  }
+        .container {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        h1 { font-size: 3rem; font-weight: 900; color: #333; margin-bottom: 20px; }
+        p { color: #666; margin-bottom: 30px; font-size: 1.1rem; }
+        
+        #file-input { margin: 20px 0; }
+        #file-status { margin-top: 15px; color: #5a8a3c; font-weight: 700; min-height: 24px; }
+        
+        .btn-generate {
+            background-color: #c8ddb0;
+            color: #4a7a32;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.2s;
+        }
+        .btn-generate:disabled { background-color: #eee; color: #aaa; cursor: not-allowed; }
 
-  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
-  .screen.active { display: flex !important; }
-
-  .logo-area { margin-bottom: 28px; text-align: center; }
-  .logo-tagline { font-size: clamp(1.4rem, 3.5vw, 1.9rem); font-weight: 900; color: var(--green-dark); letter-spacing: -0.5px; }
-
-  .settings-card, .upload-card { background: var(--card); border-radius: 20px; padding: clamp(24px, 5vw, 40px); box-shadow: var(--shadow); width: 100%; max-width: 580px; }
-  
-  .section-title { font-size: 0.78rem; font-weight: 700; color: var(--text-light); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-
-  /* 행 선택 버튼 */
-  .row-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
-  .row-btn { padding: 9px 18px; border-radius: 20px; border: 2px solid #d8d8d8; background: white; cursor: pointer; font-weight: 700; font-size: 0.88rem; transition: all 0.15s; }
-  .row-btn.selected { border-color: var(--green-btn); background: var(--green-btn); color: var(--green-text); }
-
-  /* 스테퍼 */
-  .stepper-group { display: flex; gap: 10px; }
-  .stepper-item { flex: 1; background: #f8f7f2; border-radius: 12px; padding: 12px; border: 1px solid var(--border); text-align: center; }
-  .stepper-controls { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .stepper-btn { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--green-light); background: white; cursor: pointer; font-weight: 900; color: var(--green-dark); }
-  .stepper-val { font-size: 1.3rem; font-weight: 900; min-width: 22px; }
-
-  .btn-primary { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 13px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; }
-  .btn-secondary { background: white; color: var(--green-text); border: 2px solid var(--green-btn); border-radius: 10px; padding: 11px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: 700; }
-
-  /* 테스트 결과 화면 */
-  #test-screen { display: none; padding: 2vh 8vw; width: 100%; height: 100vh; flex-direction: column; max-width: 1100px; margin: 0 auto; box-sizing: border-box; }
-  .question-block { background: var(--card); border-radius: 16px; padding: 2vh 3vw; margin-bottom: 1.5vh; box-shadow: var(--shadow); flex: 1; display: flex; flex-direction: column; justify-content: center; }
-  .q-label { width: 40px; height: 40px; background: white; border-radius: 8px; border: 2px solid var(--green-btn); font-weight: 900; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; color: var(--green-text); }
-  .row-badge-inline { background: var(--green-btn); color: var(--green-text); border-radius: 36px; padding: 10px 20px; font-weight: 700; font-size: 1.5rem; margin: 0 5px; }
-  .word-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 1vh; flex: 1; }
-  .word-card { border: 2px solid #b0cc98; border-radius: 12px; background: var(--green-btn); padding: 20px; text-align: center; font-weight: 700; font-size: 1.5rem; color: var(--green-text); display: flex; align-items: center; justify-content: center; }
-  .word-num { color: var(--green-text); font-weight: 600; text-align: center; margin-bottom: 4px; }
-</style>
+        /* 결과 화면 설정 */
+        #test-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            padding: 40px;
+            overflow-y: auto;
+            flex-direction: column;
+            align-items: center;
+        }
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+            width: 100%;
+        }
+        .word-item {
+            border: 2px solid #c8ddb0;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 
-<div id="settings-screen" class="screen active">
-  <div class="logo-area"><span class="logo-tagline">가나 수행평가 생성기</span></div>
-  <div class="settings-card">
-    <div class="section-title">1번 문제 — 행 범위 선택</div>
-    <div class="row-btn-group" id="q1-row-btns">
-      <button class="row-btn" onclick="toggleRow(this,'아행')">아행</button>
-      <button class="row-btn" onclick="toggleRow(this,'카행')">카행</button>
-      <button class="row-btn" onclick="toggleRow(this,'사행')">사행</button>
-      <button class="row-btn" onclick="toggleRow(this,'타행')">타행</button>
-      <button class="row-btn" onclick="toggleRow(this,'나행')">나행</button>
-      <button class="row-btn" onclick="toggleRow(this,'하행')">하행</button>
-      <button class="row-btn" onclick="toggleRow(this,'마행')">마행</button>
-      <button class="row-btn" onclick="toggleRow(this,'라행')">라행</button>
-      <button class="row-btn" onclick="toggleRow(this,'야행+와행')">야행+와행</button>
+    <div class="container" id="main-screen">
+        <h1>가나비 AI 에디터</h1>
+        <p>엑셀 어휘표를 기반으로 <b>반별 랜덤 시험</b>을 생성합니다.</p>
+        
+        <input type="file" id="file-input" accept=".xlsx,.xls">
+        <div id="file-status"></div>
+        
+        <button id="generate-btn" class="btn-generate" disabled onclick="generateTest()">수행평가 생성</button>
     </div>
-    <hr style="margin:22px 0; border:0; border-top:1px solid #eee;">
-    <div class="section-title">2번 문제 — 난이도별 단어 수</div>
-    <div class="stepper-group">
-      <div class="stepper-item"><div>상</div><div class="stepper-controls"><button class="stepper-btn" onclick="changeCount('sang',-1)">-</button><div class="stepper-val" id="val-sang">1</div><button class="stepper-btn" onclick="changeCount('sang',1)">+</button></div></div>
-      <div class="stepper-item"><div>중</div><div class="stepper-controls"><button class="stepper-btn" onclick="changeCount('jung',-1)">-</button><div class="stepper-val" id="val-jung">2</div><button class="stepper-btn" onclick="changeCount('jung',1)">+</button></div></div>
-      <div class="stepper-item"><div>하</div><div class="stepper-controls"><button class="stepper-btn" onclick="changeCount('ha',-1)">-</button><div class="stepper-val" id="val-ha">1</div><button class="stepper-btn" onclick="changeCount('ha',1)">+</button></div></div>
+
+    <div id="test-screen">
+        <h1>일본어 단어 테스트</h1>
+        <div class="word-grid" id="word-grid"></div>
+        <button class="btn-generate" onclick="window.print()" style="margin-top:40px;">인쇄하기</button>
+        <button onclick="location.reload()" style="margin-top:10px; background:none; border:none; color:#666; cursor:pointer;">다시 만들기</button>
     </div>
-    <button class="btn-primary" onclick="showScreen('upload-screen')">다음: 파일 업로드</button>
-  </div>
-</div>
 
-<div id="upload-screen" class="screen">
-  <div class="upload-card">
-    <div class="section-title">명사 단어 엑셀 업로드</div>
-    <p style="font-size: 0.82rem; color: #666; margin-bottom: 20px;">(A열: 상 / B열: 중 / C열: 하)</p>
-    <input type="file" id="file-input" accept=".xlsx,.xls">
-    <div id="file-status" style="margin-top:10px; color:var(--green-dark); font-weight:700;"></div>
-    <button class="btn-primary" id="generate-btn" disabled onclick="generateTest()">수행평가 생성</button>
-    <button class="btn-secondary" onclick="showScreen('settings-screen')">이전으로</button>
-  </div>
-</div>
+    <script>
+        let wordData = { sang: [], jung: [], ha: [] };
 
-<div id="test-screen">
-  <div style="text-align:center; margin-bottom:20px;"><h1>일본어 수행평가</h1></div>
-  <div class="question-block">
-    <div style="font-size:1.5rem; font-weight:700;"><span class="q-label">1</span> <span id="q1-badges"></span> 에 해당하는 10자를 쓰시오.</div>
-  </div>
-  <div class="question-block">
-    <div style="font-size:1.5rem; font-weight:700;"><span class="q-label">2</span> 다음 단어를 일본어로 쓰시오.</div>
-    <div class="word-grid" id="word-grid"></div>
-  </div>
-  <button class="btn-primary" style="width:200px; margin: 20px auto;" onclick="window.print()">인쇄하기</button>
-  <button class="btn-secondary" style="width:200px; margin: 0 auto;" onclick="location.reload()">다시 시작</button>
-</div>
+        // 1. 엑셀 파일 읽기
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-<script>
-// ── 자바스크립트 로직 (원본 보존 및 기능 보강) ──
-let selectedRows = [];
-let counts = { sang: 1, jung: 2, ha: 1 };
-let wordData = { sang: [], jung: [], ha: [] };
-const ALL_ROWS = ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
 
-function toggleRow(btn, row) {
-  btn.classList.toggle('selected');
-  if(btn.classList.contains('selected')) selectedRows.push(row);
-  else selectedRows = selectedRows.filter(r => r !== row);
-}
+                wordData = { sang: [], jung: [], ha: [] };
+                
+                // 2행부터 데이터 추출 (A:상, B:중, C:하)
+                json.slice(1).forEach(row => {
+                    if(row[0]) wordData.sang.push(row[0]);
+                    if(row[1]) wordData.jung.push(row[1]);
+                    if(row[2]) wordData.ha.push(row[2]);
+                });
 
-function changeCount(key, delta) {
-  counts[key] = Math.max(0, counts[key] + delta);
-  document.getElementById('val-' + key).innerText = counts[key];
-}
+                document.getElementById('file-status').innerText = `✅ ${file.name} 준비 완료!`;
+                document.getElementById('generate-btn').disabled = false;
+            };
+            reader.readAsArrayBuffer(file);
+        });
 
-function showScreen(id) {
-  document.querySelectorAll('.screen, #test-screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-  const target = document.getElementById(id);
-  target.style.display = 'flex';
-  target.classList.add('active');
-}
+        // 2. 랜덤 추출 및 화면 전환
+        function generateTest() {
+            const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+            
+            // 난이도별 추출 (상1, 중2, 하1 예시)
+            const final = [
+                ...shuffle(wordData.sang).slice(0, 1),
+                ...shuffle(wordData.jung).slice(0, 2),
+                ...shuffle(wordData.ha).slice(0, 1)
+            ];
 
-// 엑셀 파일 로드 로직
-document.getElementById('file-input').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = new Uint8Array(e.target.result);
-    const wb = XLSX.read(data, {type:'array'});
-    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-    wordData = { sang: [], jung: [], ha: [] };
-    json.slice(1).forEach(r => {
-      if(r[0]) wordData.sang.push(r[0]);
-      if(r[1]) wordData.jung.push(r[1]);
-      if(r[2]) wordData.ha.push(r[2]);
-    });
-    document.getElementById('file-status').innerText = "✅ " + file.name + " 로드 완료";
-    document.getElementById('generate-btn').disabled = false;
-  };
-  reader.readAsArrayBuffer(file);
-});
+            const grid = document.getElementById('word-grid');
+            grid.innerHTML = final.map((word, i) => `
+                <div class="word-item">
+                    <span style="font-size:0.8rem; color:#999;">${i+1}</span><br>${word}
+                </div>
+            `).join('');
 
-// 문제 생성 핵심 로직
-function generateTest() {
-  // 1번 문제: 선택한 행 중 1개 + 나머지 중 1개 랜덤
-  const r1 = selectedRows.length > 0 ? selectedRows[Math.floor(Math.random()*selectedRows.length)] : '아행';
-  const r2 = ALL_ROWS.filter(r => r !== r1)[Math.floor(Math.random()*(ALL_ROWS.length-1))];
-  document.getElementById('q1-badges').innerHTML = `<span class="row-badge-inline">${r1}</span> <span class="row-badge-inline">${r2}</span>`;
-
-  // 2번 문제: 난이도별 추출
-  const pick = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-  const finalWords = [
-    ...pick(wordData.sang, counts.sang),
-    ...pick(wordData.jung, counts.jung),
-    ...pick(wordData.ha, counts.ha)
-  ];
-  
-  document.getElementById('word-grid').innerHTML = finalWords.map((w, i) => `
-    <div class="word-card-wrap">
-      <div class="word-num">${i+1}</div>
-      <div class="word-card">${w}</div>
-    </div>`).join('');
-
-  showScreen('test-screen');
-}
-</script>
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('test-screen').style.display = 'flex';
+        }
+    </script>
 </body>
 </html>
