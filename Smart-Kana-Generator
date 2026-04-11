@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>가나비 AI 에듀테크 툴</title>
+<title>가나비 AI - 지능형 에듀테크 툴</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
@@ -16,123 +16,120 @@
   .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 800px; text-align: center; }
   .btn { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 15px 30px; font-weight: 700; cursor: pointer; font-size: 1.1rem; margin: 10px; }
 
-  /* 히라가나 가타카나 선택지 (최상단) */
-  .kana-selector { display: flex; gap: 20px; justify-content: center; margin: 30px 0; }
-  .kana-box { 
-    width: 200px; padding: 30px; border: 4px solid var(--green-btn); border-radius: 20px; 
-    font-size: 1.8rem; font-weight: 900; cursor: pointer; background: white; transition: 0.2s;
+  /* 1단계: 히라가나 가타카나 큰 선택지 */
+  .main-selection { display: flex; gap: 20px; justify-content: center; margin: 30px 0; }
+  .type-box { 
+    flex: 1; padding: 40px 20px; border: 4px solid var(--green-btn); border-radius: 20px; 
+    font-size: 2rem; font-weight: 900; cursor: pointer; background: white; transition: 0.3s;
   }
-  .kana-box.selected { background: var(--green-text); color: white; border-color: var(--green-text); }
+  .type-box.active { background: var(--green-text); color: white; border-color: var(--green-text); }
 
-  /* 행 선택 */
+  /* 2단계: 행 선택 그리드 */
   .row-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
-  .row-item { padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; font-weight: bold; }
-  .row-item.active { background: var(--green-text); color: white; }
+  .row-btn { padding: 15px; border: 1px solid #ddd; border-radius: 10px; cursor: pointer; background: white; font-weight: bold; }
+  .row-btn.active { background: var(--green-text); color: white; border-color: var(--green-text); }
 
-  /* 결과 화면 */
-  .dashboard { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 20px; text-align: left; }
-  .level-card { padding: 20px; border-radius: 15px; background: #f9fdf5; border: 2px solid var(--green-btn); }
-  .level-title { font-weight: 900; color: var(--green-text); margin-bottom: 10px; border-bottom: 2px solid var(--green-btn); }
-  .word-item { font-size: 2rem; font-weight: 900; background: white; margin: 10px 0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #eee; }
+  /* 3단계: 대시보드 결과 */
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
+  .dash-card { padding: 25px; border-radius: 20px; background: #f9fdf5; border: 2px solid var(--green-btn); text-align: left; }
+  .dash-title { font-size: 1.2rem; font-weight: 900; color: var(--green-text); border-bottom: 2px solid var(--green-btn); margin-bottom: 15px; padding-bottom: 5px; }
+  .word-box { font-size: 2.2rem; font-weight: 900; background: white; margin-bottom: 15px; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 </style>
 </head>
 <body>
 
 <div id="step1" class="screen active">
   <div class="card">
-    <h1 style="color:var(--green-text)">가나비 AI 에듀테크 툴</h1>
+    <h1 style="color:var(--green-text)">가나비 AI 에듀테크 설정</h1>
     
-    <h3>1. 학습 대상 가나 선택</h3>
-    <div class="kana-selector">
-      <div id="btn-hira" class="kana-box selected" onclick="chooseKana('히라가나')">히라가나</div>
-      <div id="btn-kata" class="kana-box" onclick="chooseKana('가타카나')">가타카나</div>
+    <p style="font-size: 1.2rem; font-weight: bold;">[필수선택] 학습할 가나를 선택하세요</p>
+    <div class="main-selection">
+      <div id="sel-hira" class="type-box active" onclick="setType('히라가나')">히라가나</div>
+      <div id="sel-kata" class="type-box" onclick="setType('가타카나')">가타카나</div>
     </div>
 
-    <h3>2. 출제 범위 선택</h3>
-    <div id="row-container" class="row-grid"></div>
+    <p style="font-size: 1.2rem; font-weight: bold;">[범위선택] 출제 범위를 선택하세요</p>
+    <div id="row-btns" class="row-grid"></div>
 
-    <h3>3. 문항 개수 설정</h3>
-    <div style="margin: 15px 0;">
-      상: <input type="number" id="num-sang" value="1" style="width:50px"> 
-      중: <input type="number" id="num-jung" value="2" style="width:50px"> 
-      하: <input type="number" id="num-ha" value="1" style="width:50px">
+    <p style="font-size: 1.2rem; font-weight: bold;">[문항설정] 난이도별 단어 개수</p>
+    <div style="margin: 10px 0;">
+      상: <input type="number" id="in-sang" value="1" style="width:50px; padding:5px;"> 
+      중: <input type="number" id="in-jung" value="2" style="width:50px; padding:5px;"> 
+      하: <input type="number" id="in-ha" value="1" style="width:50px; padding:5px;">
     </div>
-    
-    <button class="btn" onclick="showStep(2)">다음 단계 (파일 업로드)</button>
+    <button class="btn" onclick="goStep(2)">다음: 데이터 업로드</button>
   </div>
 </div>
 
 <div id="step2" class="screen">
   <div class="card">
-    <h2 style="color:var(--green-text)">데이터 파일 업로드</h2>
-    <p>엑셀 파일(.xlsx)을 업로드해 주세요.</p>
-    <input type="file" id="excel-file" accept=".xlsx, .xls" style="margin: 20px 0; padding: 10px; border: 1px dashed var(--green-text); width: 100%;">
-    
-    <div id="preview-area" style="display:none; margin-top:20px;">
-      <p style="color: blue; font-weight: bold;">✅ 파일이 정상적으로 로드되었습니다.</p>
-      <button class="btn" onclick="showStep(3)">에듀테크 대시보드 실행</button>
+    <h2 style="color:var(--green-text)">엑셀 데이터 업로드</h2>
+    <p>분류하신 상/중/하 엑셀 파일을 선택해주세요.</p>
+    <input type="file" id="file-upload" accept=".xlsx, .xls" style="margin: 30px 0; font-size: 1rem;">
+    <div id="upload-status" style="display:none;">
+      <p style="color:var(--green-text); font-weight:bold;">✅ 데이터 로드 완료!</p>
+      <button class="btn" onclick="goStep(3)">에듀테크 대시보드 실행</button>
     </div>
   </div>
 </div>
 
 <div id="step3" class="screen">
   <div class="card" style="max-width: 900px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2 id="final-title" style="color:var(--green-text); margin:0;">대시보드</h2>
-      <button class="btn" style="background:var(--green-text); color:white;" onclick="renderWords()">🎲 랜덤 재생성</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid var(--green-text); padding-bottom: 10px;">
+      <h2 id="res-type" style="color:var(--green-text); margin:0;">대시보드</h2>
+      <button class="btn" style="background:var(--green-text); color:white; margin:0;" onclick="drawWords()">🎲 랜덤 재생성 (반별 교체)</button>
     </div>
-    <p id="final-range" style="text-align:left; color:#666;"></p>
-    
-    <div class="dashboard">
-      <div class="level-card"><div class="level-title">상 (High)</div><div id="disp-sang"></div></div>
-      <div class="level-card"><div class="level-title">중 (Mid)</div><div id="disp-jung"></div></div>
-      <div class="level-card"><div class="level-title">하 (Low)</div><div id="disp-ha"></div></div>
+    <p id="res-range" style="text-align:left; color:#666; margin-top:10px;"></p>
+
+    <div class="dashboard-grid">
+      <div class="dash-card"><div class="dash-title">상 (High)</div><div id="area-sang"></div></div>
+      <div class="dash-card"><div class="dash-title">중 (Mid)</div><div id="area-jung"></div></div>
+      <div class="dash-card"><div class="dash-title">하 (Low)</div><div id="area-ha"></div></div>
     </div>
-    
-    <button class="btn" onclick="location.reload()" style="margin-top:20px; font-size:0.8rem; background:#eee; color:#333;">초기화</button>
+    <button class="btn" onclick="location.reload()" style="margin-top:30px; font-size:0.8rem; background:#eee; color:#333;">초기 설정으로</button>
   </div>
 </div>
 
 <script>
-let selectedKana = '히라가나';
+let kanaType = '히라가나';
 let selectedRows = [];
-let wordSource = { sang: [], jung: [], ha: [] };
+let rawData = { sang: [], jung: [], ha: [] };
 
-// 1. 가나 선택
-function chooseKana(val) {
-  selectedKana = val;
-  document.getElementById('btn-hira').classList.toggle('selected', val === '히라가나');
-  document.getElementById('btn-kata').classList.toggle('selected', val === '가타카나');
+// 1. 가나 타입 선택
+function setType(val) {
+  kanaType = val;
+  document.getElementById('sel-hira').classList.toggle('active', val === '히라가나');
+  document.getElementById('sel-kata').classList.toggle('active', val === '가타카나');
 }
 
-// 2. 행 버튼 생성
-const rowList = ['아','카','사','타','나','하','마','라','야','와'];
-const rowCont = document.getElementById('row-container');
-rowList.forEach(r => {
-  const div = document.createElement('div');
-  div.className = 'row-item';
-  div.innerText = r + '행';
-  div.onclick = function() {
+// 2. 행 버튼 생성 (아~와)
+const rows = ['아','카','사','타','나','하','마','라','야','와'];
+const rowContainer = document.getElementById('row-btns');
+rows.forEach(r => {
+  const b = document.createElement('div');
+  b.className = 'row-btn';
+  b.innerText = r + '행';
+  b.onclick = function() {
     this.classList.toggle('active');
-    const idx = selectedRows.indexOf(r);
-    if(idx > -1) selectedRows.splice(idx, 1);
+    const i = selectedRows.indexOf(r);
+    if(i > -1) selectedRows.splice(i, 1);
     else selectedRows.push(r);
   };
-  rowCont.appendChild(div);
+  rowContainer.appendChild(b);
 });
 
-function showStep(n) {
+function goStep(n) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('step' + n).classList.add('active');
   if(n === 3) {
-    document.getElementById('final-title').innerText = selectedKana + " AI 대시보드";
-    document.getElementById('final-range').innerText = "출제 범위: " + (selectedRows.join(', ') || "전체");
-    renderWords();
+    document.getElementById('res-type').innerText = kanaType + " 지능형 대시보드";
+    document.getElementById('res-range').innerText = "출제 범위: " + (selectedRows.join(', ') || "전체");
+    drawWords();
   }
 }
 
-// 3. 파일 업로드 로직 (가장 안정적인 방식)
-document.getElementById('excel-file').addEventListener('change', function(e) {
+// 3. 파일 업로드 핸들링
+document.getElementById('file-upload').addEventListener('change', function(e) {
   const file = e.target.files[0];
   const reader = new FileReader();
   reader.onload = function(evt) {
@@ -141,28 +138,28 @@ document.getElementById('excel-file').addEventListener('change', function(e) {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
 
-    wordSource = { sang: [], jung: [], ha: [] };
+    rawData = { sang: [], jung: [], ha: [] };
     json.slice(1).forEach(row => {
-      if(row[0]) wordSource.sang.push(row[0]);
-      if(row[1]) wordSource.jung.push(row[1]);
-      if(row[2]) wordSource.ha.push(row[2]);
+      if(row[0]) rawData.sang.push(row[0]);
+      if(row[1]) rawData.jung.push(row[1]);
+      if(row[2]) rawData.ha.push(row[2]);
     });
-    document.getElementById('preview-area').style.display = 'block';
+    document.getElementById('upload-status').style.display = 'block';
   };
   reader.readAsArrayBuffer(file);
 });
 
-// 4. 랜덤 렌더링
-function renderWords() {
-  const sNum = document.getElementById('num-sang').value;
-  const jNum = document.getElementById('num-jung').value;
-  const hNum = document.getElementById('num-ha').value;
+// 4. 단어 랜덤 추출 및 표시
+function drawWords() {
+  const sN = document.getElementById('in-sang').value;
+  const jN = document.getElementById('in-jung').value;
+  const hN = document.getElementById('in-ha').value;
 
-  const pick = (arr, n) => [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
+  const shuffle = (arr, n) => [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
 
-  document.getElementById('disp-sang').innerHTML = pick(wordSource.sang, sNum).map(w => `<div class="word-item">${w}</div>`).join('');
-  document.getElementById('disp-jung').innerHTML = pick(wordSource.jung, jNum).map(w => `<div class="word-item">${w}</div>`).join('');
-  document.getElementById('disp-ha').innerHTML = pick(wordSource.ha, hNum).map(w => `<div class="word-item">${w}</div>`).join('');
+  document.getElementById('area-sang').innerHTML = shuffle(rawData.sang, sN).map(w => `<div class="word-box">${w}</div>`).join('');
+  document.getElementById('area-jung').innerHTML = shuffle(rawData.jung, jNum=jN).map(w => `<div class="word-box">${w}</div>`).join('');
+  document.getElementById('area-ha').innerHTML = shuffle(rawData.ha, hN).map(w => `<div class="word-box">${w}</div>`).join('');
 }
 </script>
 </body>
