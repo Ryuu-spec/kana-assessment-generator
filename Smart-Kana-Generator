@@ -14,12 +14,16 @@
   .screen.active { display: flex; }
   
   .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; }
-  .btn { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 15px 30px; font-weight: 700; cursor: pointer; font-size: 1rem; margin: 10px; }
+  .btn { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 15px 30px; font-weight: 700; cursor: pointer; font-size: 1.1rem; margin: 10px; }
   
-  /* 선택 버튼 스타일 */
-  .toggle-group { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
-  .toggle-btn { padding: 15px 40px; border: 2px solid var(--green-btn); border-radius: 10px; cursor: pointer; background: white; font-weight: 900; font-size: 1.2rem; transition: 0.3s; }
-  .toggle-btn.active { background: var(--green-text); color: white; border-color: var(--green-text); }
+  /* [중요] 히라가나 가타카나 선택지 스타일 */
+  .selection-container { display: flex; justify-content: center; gap: 20px; margin: 30px 0; }
+  .select-box { 
+    flex: 1; padding: 25px; border: 3px solid var(--green-btn); border-radius: 15px; 
+    cursor: pointer; font-size: 1.5rem; font-weight: 900; background: white; color: #666;
+    transition: all 0.2s;
+  }
+  .select-box.active { background: var(--green-btn); color: var(--green-text); border-color: var(--green-text); }
 
   /* 행 선택 스타일 */
   .row-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
@@ -30,7 +34,7 @@
   .excel-view th { background: #eee; border: 1px solid #ccc; padding: 10px; }
   .excel-view td { border: 1px solid #ccc; padding: 12px; font-size: 0.95rem; }
 
-  /* 대시보드 */
+  /* 에듀테크 대시보드 */
   .difficulty-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
   .level-box { padding: 20px; border-radius: 15px; background: #f9fdf5; border: 2px solid var(--green-btn); }
   .level-title { font-weight: 900; color: var(--green-text); margin-bottom: 15px; border-bottom: 2px solid var(--green-btn); padding-bottom: 5px; font-size: 1.2rem; }
@@ -41,22 +45,22 @@
 
 <div id="step1" class="screen active">
   <div class="card">
-    <h1 style="color:var(--green-text)">가나비 AI 평가 설계</h1>
+    <h1 style="color:var(--green-text)">가나비 AI 에듀테크 설정</h1>
     
-    <p>1. 학습할 가나를 선택하세요</p>
-    <div class="toggle-group">
-      <div class="toggle-btn active" onclick="selectKana(this, 'hiragana')">히라가나</div>
-      <div class="toggle-btn" onclick="selectKana(this, 'katakana')">가타카나</div>
+    <p style="font-weight: bold; font-size: 1.2rem;">[선택지 1] 학습할 가나를 선택하세요</p>
+    <div class="selection-container">
+      <div class="select-box active" onclick="setKana(this, '히라가나')">히라가나</div>
+      <div class="select-box" onclick="setKana(this, '가타카나')">가타카나</div>
     </div>
 
-    <p>2. 출제 범위를 선택하세요 (아행~와행)</p>
+    <p style="font-weight: bold; font-size: 1.2rem;">[선택지 2] 출제 범위를 선택하세요</p>
     <div class="row-group" id="row-btns"></div>
 
-    <p>3. 난이도별 추출 단어 개수</p>
-    <div style="margin: 15px 0;">
-      상: <input type="number" id="cnt-sang" value="1" style="width:50px"> 
-      중: <input type="number" id="cnt-jung" value="2" style="width:50px"> 
-      하: <input type="number" id="cnt-ha" value="1" style="width:50px">
+    <p style="font-weight: bold; font-size: 1.2rem;">[선택지 3] 난이도별 추출 개수</p>
+    <div style="margin: 15px 0; font-size: 1.1rem;">
+      상: <input type="number" id="cnt-sang" value="1" style="width:60px; padding:5px;"> 
+      중: <input type="number" id="cnt-jung" value="2" style="width:60px; padding:5px;"> 
+      하: <input type="number" id="cnt-ha" value="1" style="width:60px; padding:5px;">
     </div>
     <button class="btn" onclick="showScreen('step2')">다음: 데이터 업로드</button>
   </div>
@@ -64,13 +68,13 @@
 
 <div id="step2" class="screen">
   <div class="card">
-    <h2 style="color:var(--green-text)">엑셀 데이터 업로드</h2>
-    <p>선생님이 분류하신 상/중/하 리스트를 불러옵니다.</p>
-    <input type="file" id="file-input" accept=".xlsx, .xls, .csv" onchange="handleExcel(event)">
+    <h2 style="color:var(--green-text)">데이터 업로드 및 검수</h2>
+    <p>엑셀 파일을 선택해 주세요.</p>
+    <input type="file" id="file-input" accept=".xlsx, .xls, .csv" onchange="handleExcel(event)" style="margin-bottom: 20px;">
     <table class="excel-view">
       <thead><tr><th>상 (A열)</th><th>중 (B열)</th><th>하 (C열)</th></tr></thead>
       <tbody id="excel-body">
-        <tr><td colspan="3" style="padding:40px; color:#999;">파일을 선택하면 데이터를 분석합니다.</td></tr>
+        <tr><td colspan="3" style="padding:40px; color:#999;">파일을 업로드하면 상중하 단어가 표시됩니다.</td></tr>
       </tbody>
     </table>
     <button class="btn" id="gen-btn" disabled onclick="generateDashboard()">에듀테크 대시보드 실행</button>
@@ -95,23 +99,23 @@
       <div class="level-box"><div class="level-title">하 (Low)</div><div id="list-ha"></div></div>
     </div>
     
-    <button class="btn" onclick="showScreen('step1')" style="background:#eee; color:#333; margin-top:30px;">초기 설정으로</button>
+    <button class="btn" onclick="showScreen('step1')" style="background:#eee; color:#333; margin-top:30px;">초기 화면으로</button>
   </div>
 </div>
 
 <script>
 let uploadedData = {sang:[], jung:[], ha:[]};
 let selectedRows = [];
-let currentKana = 'hiragana';
+let currentKana = '히라가나';
 
-// 가나 선택 함수
-function selectKana(el, type) {
-    document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-    el.classList.add('active');
-    currentKana = type;
+// 가나 선택 처리
+function setKana(el, val) {
+  document.querySelectorAll('.select-box').forEach(box => box.classList.remove('active'));
+  el.classList.add('active');
+  currentKana = val;
 }
 
-// 행 버튼 생성
+// 행 선택 버튼 생성
 const rows = ['아','카','사','타','나','하','마','라','야','와'];
 document.getElementById('row-btns').innerHTML = rows.map(r => `<div class="row-item" onclick="toggleRow(this, '${r}')">${r}행</div>`).join('');
 
@@ -126,17 +130,17 @@ function toggleRow(el, r) {
   else selectedRows.push(r);
 }
 
-// 파일 업로드 (오류 방지 위해 ArrayBuffer 방식 사용)
+// 파일 업로드 (가장 안정적인 방식)
 function handleExcel(e) {
   const file = e.target.files[0];
-  if (!file) return;
+  if(!file) return;
 
   const reader = new FileReader();
   reader.onload = function(evt) {
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, {type: 'array'});
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rowsArr = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});
+    const sheetName = workbook.SheetNames[0];
+    const rowsArr = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1, defval: ""});
 
     const body = document.getElementById('excel-body');
     body.innerHTML = "";
@@ -162,7 +166,7 @@ function handleExcel(e) {
 }
 
 function generateDashboard() {
-  document.getElementById('view-kana').innerText = currentKana === 'hiragana' ? "히라가나" : "가타카나";
+  document.getElementById('view-kana').innerText = currentKana;
   document.getElementById('view-rows').innerText = selectedRows.length > 0 ? selectedRows.join(', ') : "전체";
   refreshWords();
   showScreen('step3');
