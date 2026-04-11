@@ -1,152 +1,804 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>가나비 AI 에디터</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        /* ── 수현 님의 원본 디자인 보존 ── */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-        
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f5f2e8;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일본어 문자 수행평가 툴</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f2e8;--card:#fff;
+  --green-l:#c8ddb0;--green-d:#5a8a3c;--green-t:#4a7a32;
+  --text:#2d2d2d;--text-l:#666;--border:#d0c9b0;
+  --red:#c0392b;--red-bg:#fdf2f0;
+  --amber:#d68910;--amber-bg:#fdf8ec;
+  --green:#1e8449;--green-bg:#edfaf3;
+  --sh:0 2px 12px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-        .container {
-            background: white;
-            padding: 60px 40px;
-            border-radius: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            text-align: center;
-            width: 90%;
-            max-width: 800px;
-        }
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;min-height:100vh;}
 
-        h1 { font-size: 3rem; font-weight: 900; color: #333; margin-bottom: 20px; }
-        p { color: #666; margin-bottom: 30px; font-size: 1.1rem; }
-        
-        #file-input { margin: 20px 0; }
-        #file-status { margin-top: 15px; color: #5a8a3c; font-weight: 700; min-height: 24px; }
-        
-        .btn-generate {
-            background-color: #c8ddb0;
-            color: #4a7a32;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: 0.2s;
-        }
-        .btn-generate:disabled { background-color: #eee; color: #aaa; cursor: not-allowed; }
+/* ── 헤더 ── */
+.hdr{background:var(--green-d);color:#fff;padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;}
+.hdr .brand{font-size:1.15rem;font-weight:900;letter-spacing:-0.3px;}
+.hdr .step{margin-left:auto;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;}
 
-        /* 결과 화면 설정 */
-        #test-screen {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: white;
-            padding: 40px;
-            overflow-y: auto;
-            flex-direction: column;
-            align-items: center;
-        }
-        .word-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 20px;
-            margin-top: 30px;
-            width: 100%;
-        }
-        .word-item {
-            border: 2px solid #c8ddb0;
-            padding: 20px;
-            border-radius: 15px;
-            font-size: 1.4rem;
-            font-weight: 700;
-            text-align: center;
-        }
-    </style>
+/* ── 공통 ── */
+.cwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:18px;}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--sh);padding:22px 26px;width:100%;}
+.ctitle{font-size:.68rem;font-weight:700;color:var(--text-l);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ctitle::before{content:"";width:3px;height:12px;background:var(--green-d);border-radius:2px;display:inline-block;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 18px;border:none;border-radius:9px;font-size:.86rem;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;}
+.btn-green{background:var(--green-l);color:var(--green-t);}
+.btn-green:hover{background:#b0cc98;}
+.btn-dark{background:var(--green-d);color:#fff;}
+.btn-dark:hover{background:#4a7a32;}
+.btn-ol{background:#fff;color:var(--text);border:1.5px solid var(--border);}
+.btn-ol:hover{border-color:var(--green-d);color:var(--green-d);}
+.btn-full{width:100%;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ══ S1: 문자 선택 ══ */
+.hero{text-align:center;}
+.hero h1{font-size:2rem;font-weight:900;margin-bottom:6px;color:var(--green-d);}
+.hero p{color:var(--text-l);font-size:.86rem;}
+.script-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px;}
+.script-btn{background:#fff;border:2px solid var(--border);border-radius:14px;padding:24px 14px;cursor:pointer;text-align:center;transition:all .18s;font-family:inherit;}
+.script-btn:hover{border-color:var(--green-d);background:#f0f7e8;transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08);}
+.script-btn .kana{font-family:"Noto Sans JP",serif;font-size:2.4rem;color:var(--green-d);display:block;margin-bottom:6px;}
+.script-btn .lbl{font-size:.92rem;font-weight:700;display:block;}
+.script-btn .sub{font-size:.7rem;color:var(--text-l);margin-top:3px;display:block;}
+
+/* ══ S2: 설정 ══ */
+.row-btn-group{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;}
+.row-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--text-l);font-size:.8rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all .12s;}
+.row-btn:hover{border-color:var(--green-d);color:var(--green-d);}
+.row-btn.on{border-color:var(--green-l);background:var(--green-l);color:var(--green-t);}
+.info-box{background:#f0f7e8;border-radius:8px;padding:8px 12px;font-size:.74rem;color:var(--text-l);line-height:1.7;margin-top:6px;}
+.info-box strong{color:var(--green-d);}
+
+.stepper-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.sitem{background:var(--bg);border-radius:10px;border:1.5px solid var(--border);padding:10px 8px;text-align:center;}
+.sitem.sang{border-color:#f5c6c2;background:var(--red-bg);}
+.sitem.jung{border-color:#f9e4a0;background:var(--amber-bg);}
+.sitem.ha  {border-color:#a9dfbf;background:var(--green-bg);}
+.slbl{font-size:.76rem;font-weight:700;margin-bottom:7px;display:flex;align-items:center;justify-content:center;gap:4px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot.sang{background:var(--red);}
+.dot.jung{background:var(--amber);}
+.dot.ha  {background:var(--green);}
+.sctl{display:flex;align-items:center;justify-content:center;gap:6px;}
+.sbtn{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:1rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;}
+.sbtn:hover{background:var(--green-d);color:#fff;border-color:var(--green-d);}
+.sval{font-size:1.4rem;font-weight:900;min-width:20px;text-align:center;}
+.tnote{text-align:center;font-size:.74rem;color:var(--text-l);margin-top:7px;}
+.tnote b{color:var(--green-d);}
+.sdivider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* ══ 행 선택기 (새 UI) ══ */
+.row-selector{display:flex;flex-direction:column;gap:10px;}
+.rs-zone{border-radius:12px;padding:10px 12px;border:2px solid transparent;transition:all .2s;}
+.rs-zone.zone1{background:#eef7e4;border-color:var(--green-l);}
+.rs-zone.zone2{background:#f0f4ff;border-color:#b8c8f0;}
+.rs-zone-label{font-size:.72rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.rs-zone.zone1 .rs-zone-label{color:var(--green-t);}
+.rs-zone.zone2 .rs-zone-label{color:#3a5ea8;}
+.rs-zone-label .zone-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:900;
+}
+.rs-zone.zone1 .zone-badge{background:var(--green-d);color:#fff;}
+.rs-zone.zone2 .zone-badge{background:#3a5ea8;color:#fff;}
+.rs-pills{display:flex;flex-wrap:wrap;gap:7px;min-height:36px;}
+.rs-pill{
+  padding:7px 16px;border-radius:20px;font-size:.82rem;font-weight:700;
+  cursor:pointer;user-select:none;transition:all .15s;
+  display:flex;align-items:center;gap:5px;
+  border:2px solid transparent;
+}
+.rs-pill.p1{background:var(--green-l);color:var(--green-t);border-color:#a8cc88;}
+.rs-pill.p1:hover{background:#b0cc98;transform:translateY(-1px);}
+.rs-pill.p2{background:#d8e4ff;color:#3a5ea8;border-color:#b0c4f8;}
+.rs-pill.p2:hover{background:#c4d4ff;transform:translateY(-1px);}
+.rs-pill .pill-arrow{font-size:.7rem;opacity:.6;}
+.rs-empty{font-size:.72rem;color:#bbb;padding:6px 0;font-style:italic;}
+
+/* ══ S3: 드래그앤드롭 ══ */
+#screen-words.active{display:flex;flex-direction:column;height:100vh;}
+#screen-words .dnd-body{flex:1;overflow-y:auto;padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;}
+
+/* 상단 현황 바 */
+.status-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sb-item{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:.78rem;font-weight:700;}
+.sb-item.sang{background:var(--red-bg);color:var(--red);}
+.sb-item.jung{background:var(--amber-bg);color:var(--amber);}
+.sb-item.ha{background:var(--green-bg);color:var(--green);}
+.sb-item .sb-num{font-size:1rem;font-weight:900;}
+.sb-guide{font-size:.72rem;color:var(--text-l);margin-left:auto;white-space:nowrap;}
+.sb-warn{font-size:.72rem;color:#c0392b;font-weight:600;white-space:nowrap;}
+
+/* 칸반 보드 */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1;min-height:0;}
+.kb-col{background:#fff;border-radius:12px;border:2px solid var(--border);display:flex;flex-direction:column;min-height:160px;transition:border-color .2s;}
+.kb-col.drag-over{border-color:var(--green-d);background:#f0f7e8;}
+.kb-head{padding:10px 12px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.kb-title{font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:5px;}
+.kb-count{font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:10px;}
+.kb-col.sang-col .kb-title{color:var(--red);}
+.kb-col.jung-col .kb-title{color:var(--amber);}
+.kb-col.ha-col   .kb-title{color:var(--green);}
+.kb-col.sang-col .kb-count{background:var(--red-bg);color:var(--red);}
+.kb-col.jung-col .kb-count{background:var(--amber-bg);color:var(--amber);}
+.kb-col.ha-col   .kb-count{background:var(--green-bg);color:var(--green);}
+.kb-need{font-size:.66rem;color:var(--text-l);}
+.kb-cards{flex:1;padding:7px 8px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;}
+.kb-cards::-webkit-scrollbar{width:3px;}
+.kb-cards::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+.kb-empty{text-align:center;padding:16px 8px;color:#ccc;font-size:.72rem;}
+
+/* 단어 카드 */
+.dcard{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:7px 9px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;transition:all .15s;}
+.dcard:active{cursor:grabbing;}
+.dcard.dragging{opacity:.4;transform:scale(.96);}
+.dcard.needs{border-color:#f39c12;background:#fffbf0;}
+.dc-kr{font-size:.84rem;font-weight:600;}
+.dc-right{display:flex;align-items:center;gap:4px;}
+.dc-db{font-size:.6rem;}
+.dc-db.found{color:#27ae60;}
+.dc-db.manual{color:#bbb;}
+.dc-del{background:none;border:none;cursor:pointer;color:#ccc;font-size:.8rem;padding:1px 3px;transition:color .1s;line-height:1;}
+.dc-del:hover{color:var(--red);}
+.unassigned-col{background:#fffbf0;border-color:#f39c12;}
+
+/* 하단 고정 입력창 */
+.bottom-input{background:#fff;border-top:1.5px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.bi-row{display:flex;gap:8px;align-items:stretch;}
+.tinput{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.86rem;font-family:inherit;background:var(--bg);color:var(--text);transition:border-color .15s;}
+.tinput:focus{outline:none;border-color:var(--green-d);background:#fff;}
+.tinput::placeholder{color:#bbb;}
+.bi-bottom{display:flex;gap:8px;align-items:center;}
+.upload-zone{flex:1;border:1.5px dashed var(--border);border-radius:8px;padding:7px 12px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);font-size:.74rem;color:var(--text-l);}
+.upload-zone:hover{border-color:var(--green-d);background:#f0f7e8;color:var(--green-d);}
+.hint{font-size:.68rem;color:var(--text-l);}
+.word-count-badge{font-size:.72rem;color:var(--text-l);white-space:nowrap;}
+.word-count-badge b{color:var(--green-d);}
+
+/* ══ S4: 수행평가 툴 ══ */
+#screen-tool{background:var(--bg);}
+#screen-tool .hdr{background:var(--green-d);}
+#screen-tool .tool-body{
+  flex:1;display:flex;flex-direction:column;
+  padding:2vh 8vw 10vh;
+  gap:1.2vh;
+  max-width:1100px;
+  width:100%;
+  margin:0 auto;
+  box-sizing:border-box;
+}
+
+/* 제목 */
+.tool-title{text-align:center;margin-bottom:0.5vh;}
+.tool-title h1{
+  font-size:clamp(1.8rem,4vw,3rem);
+  font-weight:900;color:var(--text);letter-spacing:-1px;
+}
+
+/* 문제 블록 */
+.question-block{
+  background:#fff;border-radius:16px;
+  padding:1.5vh 3vw;
+  box-shadow:var(--sh);
+  display:flex;flex-direction:column;justify-content:center;
+}
+.question-block.q1-block{flex:0 0 auto;}
+.question-block.q2-block{flex:1;min-height:0;}
+
+/* Q1 행 */
+.q-title-row{display:flex;align-items:center;flex-wrap:wrap;gap:clamp(8px,1.5vw,14px);}
+.tool-qlabel{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:clamp(34px,4vw,48px);height:clamp(34px,4vw,48px);min-width:clamp(34px,4vw,48px);
+  background:#fff;border-radius:8px;
+  border:2px solid var(--green-l);
+  font-weight:900;font-size:clamp(1rem,2vw,1.35rem);
+  color:var(--green-t);flex-shrink:0;
+}
+.q-instruction{font-size:clamp(.95rem,2vw,1.5rem);font-weight:700;color:var(--text);line-height:1.5;}
+.row-badge-inline{
+  background:var(--green-l);color:var(--green-t);
+  border-radius:36px;
+  min-width:clamp(72px,10vw,120px);
+  height:clamp(46px,7vw,72px);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:clamp(1rem,2.5vw,1.8rem);
+  white-space:nowrap;flex-shrink:0;
+  padding:0 clamp(12px,2vw,22px);
+  opacity:.45;transition:opacity .35s,transform .35s;
+}
+.row-badge-inline.on{opacity:1;transform:scale(1.04);}
+.row-badge-inline.long{font-size:clamp(.9rem,1.8vw,1.3rem);white-space:normal;line-height:1.2;word-break:keep-all;padding:0 clamp(10px,1.5vw,18px);}
+
+/* Q2 단어 그리드 */
+.q2-inner{display:flex;flex-direction:column;gap:1vh;height:100%;}
+.q2-header-row{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.q2-text{font-size:clamp(.95rem,2vw,1.5rem);font-weight:700;color:var(--text);}
+.word-grid{display:grid;gap:clamp(8px,1.2vw,14px);margin-top:1vh;}
+.word-card-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.word-num{font-size:clamp(.85rem,1.5vw,1.1rem);color:var(--green-t);font-weight:600;}
+.word-card{
+  border:2px solid #b0cc98;border-radius:14px;
+  background:var(--green-l);
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:clamp(14px,2.5vh,28px) 1vw;
+  min-height:clamp(60px,9vh,110px);
+  transition:all .3s;
+}
+.card-kr{
+  font-size:clamp(1.1rem,2.8vw,2rem);font-weight:700;
+  color:var(--green-t);text-align:center;line-height:1.2;
+  opacity:0;transition:opacity .25s;
+}
+.card-kr.on{opacity:1;}
+.word-card.on{}
+
+/* Click Here 버튼 */
+.reveal-btn{
+  display:none;
+  position:fixed;bottom:clamp(14px,3vh,26px);left:50%;transform:translateX(-50%);
+  background:var(--green-l);color:var(--green-t);
+  border:none;border-radius:30px;
+  padding:clamp(10px,1.6vh,15px) clamp(26px,5vw,50px);
+  font-size:clamp(.88rem,1.8vw,1.05rem);font-weight:700;font-family:inherit;
+  cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.12);
+  transition:all .2s;z-index:100;letter-spacing:.5px;
+}
+.reveal-btn:hover{background:#b0cc98;transform:translateX(-50%) scale(1.03);}
+.reveal-btn:active{transform:translateX(-50%) scale(.97);}
+
+@media(max-width:600px){
+  .word-grid{grid-template-columns:repeat(2,1fr) !important;}
+  #screen-tool .tool-body{padding:2vh 4vw 12vh;}
+}
+</style>
 </head>
 <body>
 
-    <div class="container" id="main-screen">
-        <h1>가나비 AI 에디터</h1>
-        <p>엑셀 어휘표를 기반으로 <b>반별 랜덤 시험</b>을 생성합니다.</p>
-        
-        <input type="file" id="file-input" accept=".xlsx,.xls">
-        <div id="file-status"></div>
-        
-        <button id="generate-btn" class="btn-generate" disabled onclick="generateTest()">수행평가 생성</button>
+<!-- ══ S1: 문자 선택 ══ -->
+<div id="screen-select" class="screen active">
+  <div class="hdr">
+    <span class="brand">일본어 문자 수행평가 툴</span>
+    <span class="step">문자 선택</span>
+  </div>
+  <div class="cwrap">
+    <div class="hero">
+      <h1>일본어 문자 수행평가 툴</h1>
+      <p>2022 개정 교육과정 어휘 DB 내장 · 히라가나 / 가타카나</p>
+    </div>
+    <div class="script-grid">
+      <button class="script-btn" onclick="selectScript('hiragana')">
+        <span class="kana">あ</span>
+        <span class="lbl">히라가나</span>
+        <span class="sub">あいうえお</span>
+      </button>
+      <button class="script-btn" onclick="selectScript('katakana')">
+        <span class="kana">ア</span>
+        <span class="lbl">가타카나</span>
+        <span class="sub">アイウエオ</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S2: 설정 ══ -->
+<div id="screen-settings" class="screen">
+  <div class="hdr">
+    <span class="brand">일본어 문자 수행평가 툴</span>
+    <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="goScreen('screen-select')">← 문자 선택</button>
+    <span class="step" id="settings-lbl">설정</span>
+  </div>
+  <div class="cwrap" style="max-width:560px;margin:0 auto;width:100%;">
+
+    <div class="card" style="max-width:520px;width:100%;">
+      <div class="ctitle">문제 1 — 행 범위 설정</div>
+      <div style="font-size:.74rem;color:var(--text-l);margin-bottom:12px;">행 이름을 클릭하면 ①행 ↔ ②행 구역을 바꿀 수 있어요. 출제 시 각 구역에서 1행씩 랜덤 선택됩니다.</div>
+
+      <div class="row-selector">
+        <!-- ① 행 구역 -->
+        <div class="rs-zone zone1">
+          <div class="rs-zone-label">
+            <span class="zone-badge">①</span>
+            행 후보 <span style="font-weight:400;color:var(--text-l);">— 랜덤 1행 출제</span>
+          </div>
+          <div class="rs-pills" id="zone1-pills"></div>
+        </div>
+
+        <div style="text-align:center;font-size:.7rem;color:var(--text-l);">↕ 클릭해서 이동</div>
+
+        <!-- ② 행 구역 -->
+        <div class="rs-zone zone2">
+          <div class="rs-zone-label">
+            <span class="zone-badge" style="background:#3a5ea8;">②</span>
+            행 후보 <span style="font-weight:400;color:var(--text-l);">— 랜덤 1행 출제</span>
+          </div>
+          <div class="rs-pills" id="zone2-pills"></div>
+        </div>
+      </div>
+
+      <div class="info-box" id="row-info-box" style="margin-top:10px;">각 구역에 1개 이상의 행이 있어야 합니다.</div>
     </div>
 
-    <div id="test-screen">
-        <h1>일본어 단어 테스트</h1>
+    <div class="card" style="max-width:520px;width:100%;">
+      <div class="ctitle">문제 2 — 난이도별 문항 수</div>
+      <div class="stepper-row">
+        <div class="sitem sang">
+          <div class="slbl"><span class="dot sang"></span> 상</div>
+          <div class="sctl">
+            <button class="sbtn" onclick="changeCount('sang',-1)">−</button>
+            <div class="sval" id="val-sang">1</div>
+            <button class="sbtn" onclick="changeCount('sang',1)">+</button>
+          </div>
+        </div>
+        <div class="sitem jung">
+          <div class="slbl"><span class="dot jung"></span> 중</div>
+          <div class="sctl">
+            <button class="sbtn" onclick="changeCount('jung',-1)">−</button>
+            <div class="sval" id="val-jung">2</div>
+            <button class="sbtn" onclick="changeCount('jung',1)">+</button>
+          </div>
+        </div>
+        <div class="sitem ha">
+          <div class="slbl"><span class="dot ha"></span> 하</div>
+          <div class="sctl">
+            <button class="sbtn" onclick="changeCount('ha',-1)">−</button>
+            <div class="sval" id="val-ha">1</div>
+            <button class="sbtn" onclick="changeCount('ha',1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="tnote">총 단어 수: <b id="total-count">4</b>개</div>
+    </div>
+
+    <div style="width:100%;max-width:520px;">
+      <button class="btn btn-dark btn-full" style="padding:13px;" onclick="goToWords()">다음 → 단어 입력</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S3: 단어 입력 (드래그앤드롭) ══ -->
+<div id="screen-words" class="screen">
+  <div class="hdr">
+    <span class="brand">일본어 문자 수행평가 툴</span>
+    <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="goScreen('screen-settings')">← 설정</button>
+    <span class="step">단어 입력</span>
+  </div>
+  <div class="dnd-body">
+    <!-- 현황 바 -->
+    <div class="status-bar">
+      <div class="sb-item sang"><span class="sb-num" id="st-sang">0</span>/<span id="need-sang">1</span> 상</div>
+      <div class="sb-item jung"><span class="sb-num" id="st-jung">0</span>/<span id="need-jung">2</span> 중</div>
+      <div class="sb-item ha"  ><span class="sb-num" id="st-ha">0</span>/<span id="need-ha">1</span> 하</div>
+      <span class="sb-guide" id="status-guide">💡 출제 수의 2배 이상 입력하면 반마다 다른 단어가 출제됩니다.</span>
+      <span class="sb-warn" id="status-warn" style="display:none;"></span>
+    </div>
+    <!-- 칸반 -->
+    <div class="kanban">
+      <div class="kb-col sang-col" id="col-sang" ondragover="onDragOver(event,'sang')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'sang')">
+        <div class="kb-head">
+          <span class="kb-title">🔴 상</span>
+          <span class="kb-count" id="kc-sang">0</span>
+          <span class="kb-need">출제 <b id="kn-sang">1</b>개</span>
+        </div>
+        <div class="kb-cards" id="cards-sang"></div>
+      </div>
+      <div class="kb-col jung-col" id="col-jung" ondragover="onDragOver(event,'jung')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'jung')">
+        <div class="kb-head">
+          <span class="kb-title">🟠 중</span>
+          <span class="kb-count" id="kc-jung">0</span>
+          <span class="kb-need">출제 <b id="kn-jung">2</b>개</span>
+        </div>
+        <div class="kb-cards" id="cards-jung"></div>
+      </div>
+      <div class="kb-col ha-col" id="col-ha" ondragover="onDragOver(event,'ha')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'ha')">
+        <div class="kb-head">
+          <span class="kb-title">🟢 하</span>
+          <span class="kb-count" id="kc-ha">0</span>
+          <span class="kb-need">출제 <b id="kn-ha">1</b>개</span>
+        </div>
+        <div class="kb-cards" id="cards-ha"></div>
+      </div>
+    </div>
+    <!-- 미분류 영역 -->
+    <div id="unassigned-wrap" style="display:none;">
+      <div class="kb-col unassigned-col" id="col-unassigned" ondragover="onDragOver(event,null)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,null)">
+        <div class="kb-head">
+          <span class="kb-title" style="color:#d68910;">⚠️ 난이도 미설정</span>
+          <span class="kb-count" id="kc-unassigned" style="background:#fff3cd;color:#d68910;">0</span>
+        </div>
+        <div class="kb-cards" id="cards-unassigned"></div>
+      </div>
+    </div>
+    <!-- 툴 시작 버튼 -->
+    <button class="btn btn-dark btn-full" style="padding:12px;font-size:.95rem;" id="tool-btn" onclick="goToTool()">🖥️ 수행평가 툴 시작</button>
+  </div>
+  <!-- 하단 고정 입력창 -->
+  <div class="bottom-input">
+    <div class="bi-row">
+      <input type="text" class="tinput" id="word-input" placeholder="예) 병원 사과 전화…" onkeydown="if(event.key==='Enter')addWord()">
+      <button class="btn btn-dark" onclick="addWord()">추가</button>
+    </div>
+    <div class="bi-bottom">
+      <div class="upload-zone" onclick="document.getElementById('xl-input').click()">📂 엑셀 업로드 (A=상 B=중 C=하)</div>
+      <input type="file" id="xl-input" accept=".xlsx,.xls" style="display:none">
+      <span class="word-count-badge">등록 <b id="word-count">0</b>개</span>
+      <button class="btn btn-ol" style="font-size:.68rem;padding:4px 8px;" onclick="clearWords()">전체 삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S4: 수행평가 툴 ══ -->
+<div id="screen-tool" class="screen">
+  <div class="hdr">
+    <span class="brand">일본어 문자 수행평가 툴</span>
+    <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="goScreen('screen-words')">← 단어 입력</button>
+    <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="reGenerate()">🔀 재생성</button>
+    <span class="step">수행평가 툴</span>
+  </div>
+  <div class="tool-body">
+    <!-- 제목 -->
+    <div class="tool-title"><h1 id="tool-title-h1">히라가나 쓰기</h1></div>
+
+    <!-- Q1 -->
+    <div class="question-block q1-block">
+      <div class="q-title-row">
+        <span class="tool-qlabel">1</span>
+        <span class="q-instruction">
+          <span id="q1-script-label">히라가나</span>&nbsp;<span id="q1-badges-inline"></span>&nbsp;에 해당하는 10자를 쓰시오.
+        </span>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="question-block q2-block">
+      <div class="q2-inner">
+        <div class="q2-header-row">
+          <span class="tool-qlabel">2</span>
+          <span class="q2-text" id="q2-text">다음 단어에 해당하는 일본어를 히라가나로 쓰시오.</span>
+        </div>
         <div class="word-grid" id="word-grid"></div>
-        <button class="btn-generate" onclick="window.print()" style="margin-top:40px;">인쇄하기</button>
-        <button onclick="location.reload()" style="margin-top:10px; background:none; border:none; color:#666; cursor:pointer;">다시 만들기</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <script>
-        let wordData = { sang: [], jung: [], ha: [] };
+<!-- reveal 버튼: position:fixed, 모든 화면 밖에 위치 -->
+<button class="reveal-btn" id="reveal-btn" onclick="reveal()" style="display:none;">Click Here</button>
 
-        // 1. 엑셀 파일 읽기
-        document.getElementById('file-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+<script>
+const VOCAB_DB = {"사이/간격":[{"jp":"あいだ","d":"low"}],"가을":[{"jp":"あき","d":"low"}],"발/다리":[{"jp":"あし","d":"low"}],"맛":[{"jp":"あじ","d":"low"}],"내일":[{"jp":"あす","d":"low"},{"jp":"あした","d":"mid"}],"오빠/형":[{"jp":"あに","d":"low"},{"jp":"おにいさん","d":"mid"}],"언니/누나":[{"jp":"あね","d":"low"},{"jp":"おねえさん","d":"mid"}],"비":[{"jp":"あめ","d":"low"}],"의사":[{"jp":"いしゃ","d":"low"}],"의자":[{"jp":"いす","d":"low"}],"딸기":[{"jp":"いちご","d":"low"}],"개":[{"jp":"いぬ","d":"low"}],"의미":[{"jp":"いみ","d":"low"}],"입구":[{"jp":"いりぐち","d":"low"}],"색":[{"jp":"いろ","d":"low"}],"위":[{"jp":"うえ","d":"low"}],"노래":[{"jp":"うた","d":"low"}],"바다":[{"jp":"うみ","d":"low"}],"그림":[{"jp":"え","d":"low"}],"역":[{"jp":"えき","d":"low"}],"차(음료)":[{"jp":"おちゃ","d":"low"}],"소리":[{"jp":"おと","d":"low"}],"선물/기념품":[{"jp":"おみやげ","d":"low"}],"모임/회":[{"jp":"かい","d":"low"}],"회의":[{"jp":"かいぎ","d":"low"}],"외국":[{"jp":"がいこく","d":"low"}],"종이":[{"jp":"かみ","d":"low"}],"머리카락":[{"jp":"かみ","d":"low"}],"몸/신체":[{"jp":"からだ","d":"low"}],"강":[{"jp":"かわ","d":"low"}],"나무":[{"jp":"き","d":"low"}],"기분/마음":[{"jp":"き","d":"low"},{"jp":"きもち","d":"mid"}],"북쪽":[{"jp":"きた","d":"low"}],"손님":[{"jp":"きゃく","d":"low"}],"오늘":[{"jp":"きょう","d":"low"}],"과일":[{"jp":"くだもの","d":"low"}],"입":[{"jp":"くち","d":"low"}],"신발":[{"jp":"くつ","d":"low"}],"나라":[{"jp":"くに","d":"low"}],"부상":[{"jp":"けが","d":"low"}],"오늘 아침":[{"jp":"けさ","d":"low"}],"아이":[{"jp":"こ","d":"low"}],"목소리":[{"jp":"こえ","d":"low"}],"일/것":[{"jp":"こと","d":"low"}],"말/언어":[{"jp":"ことば","d":"low"}],"어린이":[{"jp":"こども","d":"low"}],"쓰레기":[{"jp":"ごみ","d":"low"}],"마지막":[{"jp":"さいご","d":"low"}],"접시":[{"jp":"さら","d":"low"}],"글자":[{"jp":"じ","d":"low"}],"소금":[{"jp":"しお","d":"low"}],"식/행사":[{"jp":"しき","d":"low"}],"사고":[{"jp":"じこ","d":"low"}],"일/직업":[{"jp":"しごと","d":"low"}],"사전":[{"jp":"じしょ","d":"low"}],"아래":[{"jp":"した","d":"low"}],"시대":[{"jp":"じだい","d":"low"}],"학원":[{"jp":"じゅく","d":"low"}],"취미":[{"jp":"しゅみ","d":"low"}],"키/신장":[{"jp":"せ","d":"low"}],"자리/좌석":[{"jp":"せき","d":"low"}],"돌봄/신세":[{"jp":"せわ","d":"low"}],"밖/외부":[{"jp":"そと","d":"low"}],"하늘":[{"jp":"そら","d":"low"}],"대학교":[{"jp":"だいがく","d":"low"}],"달걀":[{"jp":"たまご","d":"low"}],"지도":[{"jp":"ちず","d":"low"}],"아버지":[{"jp":"ちち","d":"low"},{"jp":"おとうさん","d":"mid"}],"달/월":[{"jp":"つき","d":"low"}],"손":[{"jp":"て","d":"low"}],"편지":[{"jp":"てがみ","d":"low"}],"절/사찰":[{"jp":"てら","d":"low"}],"점수":[{"jp":"てん","d":"low"}],"때/시간":[{"jp":"とき","d":"low"}],"나이/해":[{"jp":"とし","d":"low"}],"친구":[{"jp":"ともだち","d":"low"}],"새":[{"jp":"とり","d":"low"}],"안/중/사이":[{"jp":"なか","d":"low"}],"여름":[{"jp":"なつ","d":"low"}],"고기":[{"jp":"にく","d":"low"}],"서쪽":[{"jp":"にし","d":"low"}],"정원":[{"jp":"にわ","d":"low"}],"고양이":[{"jp":"ねこ","d":"low"}],"열":[{"jp":"ねつ","d":"low"}],"장소":[{"jp":"ば","d":"low"},{"jp":"ばしょ","d":"low"}],"경우":[{"jp":"ばあい","d":"low"}],"상자":[{"jp":"はこ","d":"low"}],"젓가락":[{"jp":"はし","d":"low"}],"다리(교량)":[{"jp":"はし","d":"low"}],"처음/시작":[{"jp":"はじめ","d":"low"}],"꽃":[{"jp":"はな","d":"low"}],"코":[{"jp":"はな","d":"low"}],"어머니":[{"jp":"はは","d":"low"},{"jp":"おかあさん","d":"mid"}],"봄":[{"jp":"はる","d":"low"}],"동쪽":[{"jp":"ひがし","d":"low"}],"왼쪽":[{"jp":"ひだり","d":"low"}],"사람":[{"jp":"ひと","d":"low"}],"히라가나":[{"jp":"ひらがな","d":"low"}],"낮":[{"jp":"ひる","d":"low"}],"동아리/부활동":[{"jp":"ぶかつ","d":"low"}],"옷":[{"jp":"ふく","d":"low"}],"배(선박)":[{"jp":"ふね","d":"low"}],"겨울":[{"jp":"ふゆ","d":"low"}],"욕조/목욕":[{"jp":"ふろ","d":"low"}],"방":[{"jp":"へや","d":"low"}],"별도/다름":[{"jp":"べつ","d":"low"}],"방향/쪽":[{"jp":"ほう","d":"low"}],"다른 것/그 외":[{"jp":"ほか","d":"low"}],"책":[{"jp":"ほん","d":"low"}],"도시/거리":[{"jp":"まち","d":"low"}],"창문":[{"jp":"まど","d":"low"}],"오른쪽":[{"jp":"みぎ","d":"low"}],"물":[{"jp":"みず","d":"low"}],"가게":[{"jp":"みせ","d":"low"}],"길":[{"jp":"みち","d":"low"}],"초록색":[{"jp":"みどり","d":"low"}],"귀":[{"jp":"みみ","d":"low"}],"눈(신체)":[{"jp":"め","d":"low"}],"안경":[{"jp":"めがね","d":"low"}],"물건":[{"jp":"もの","d":"low"}],"산":[{"jp":"やま","d":"low"}],"뜨거운 물":[{"jp":"ゆ","d":"low"}],"눈(날씨)":[{"jp":"ゆき","d":"low"}],"꿈":[{"jp":"ゆめ","d":"low"}],"밤":[{"jp":"よる","d":"low"}],"다음 달":[{"jp":"らいげつ","d":"low"}],"기숙사":[{"jp":"りょう","d":"low"}],"빨간색(빨강)":[{"jp":"あか","d":"low"}],"파란색(파랑)":[{"jp":"あお","d":"low"}],"하얀색(하양)":[{"jp":"しろ","d":"low"}],"검은색(검정)":[{"jp":"くろ","d":"low"}],"상대방":[{"jp":"あいて","d":"mid"}],"머리":[{"jp":"あたま","d":"mid"}],"안내":[{"jp":"あんない","d":"mid"}],"목숨/생명":[{"jp":"いのち","d":"mid"}],"여동생":[{"jp":"いもうと","d":"mid"}],"접수처":[{"jp":"うけつけ","d":"mid"}],"뒤":[{"jp":"うしろ","d":"mid"}],"영화":[{"jp":"えいが","d":"mid"}],"과자":[{"jp":"おかし","d":"mid"}],"할아버지":[{"jp":"おじいさん","d":"mid"}],"남동생":[{"jp":"おとうと","d":"mid"}],"남자":[{"jp":"おとこ","d":"mid"}],"어른":[{"jp":"おとな","d":"mid"}],"할머니":[{"jp":"おばあさん","d":"mid"}],"온천":[{"jp":"おんせん","d":"mid"}],"여자":[{"jp":"おんな","d":"mid"}],"회사":[{"jp":"かいしゃ","d":"mid"}],"계단":[{"jp":"かいだん","d":"mid"}],"회화":[{"jp":"かいわ","d":"mid"}],"과목":[{"jp":"かもく","d":"mid"}],"한자":[{"jp":"かんじ","d":"mid"}],"계절":[{"jp":"きせつ","d":"mid"}],"표/티켓":[{"jp":"きっぷ","d":"mid"}],"어제":[{"jp":"きのう","d":"mid"}],"기분":[{"jp":"きぶん","d":"mid"}],"흥미/관심":[{"jp":"きょうみ","d":"mid"}],"작년":[{"jp":"きょねん","d":"mid"}],"은행":[{"jp":"ぎんこう","d":"mid"}],"공항":[{"jp":"くうこう","d":"mid"}],"약":[{"jp":"くすり","d":"mid"}],"자동차":[{"jp":"くるま","d":"mid"},{"jp":"じどうしゃ","d":"high"}],"경치":[{"jp":"けしき","d":"mid"}],"현관":[{"jp":"げんかん","d":"mid"}],"건강/활기":[{"jp":"げんき","d":"mid"}],"건강":[{"jp":"けんこう","d":"mid"}],"공원":[{"jp":"こうえん","d":"mid"}],"합격":[{"jp":"ごうかく","d":"mid"}],"고등학교":[{"jp":"こうこう","d":"mid"}],"교차로":[{"jp":"こうさてん","d":"mid"}],"교통":[{"jp":"こうつう","d":"mid"}],"파출소":[{"jp":"こうばん","d":"mid"}],"마음":[{"jp":"こころ","d":"mid"}],"올해":[{"jp":"ことし","d":"mid"}],"밥":[{"jp":"ごはん","d":"mid"}],"이번 달":[{"jp":"こんげつ","d":"mid"}],"이번/다음번":[{"jp":"こんど","d":"mid"}],"오늘 밤":[{"jp":"こんばん","d":"mid"}],"최근":[{"jp":"さいきん","d":"mid"}],"지갑":[{"jp":"さいふ","d":"mid"}],"생선/물고기":[{"jp":"さかな","d":"mid"}],"벚꽃":[{"jp":"さくら","d":"mid"}],"산책":[{"jp":"さんぽ","d":"mid"}],"시합/경기":[{"jp":"しあい","d":"mid"}],"행복":[{"jp":"しあわせ","d":"mid"}],"시간":[{"jp":"じかん","d":"mid"}],"시험":[{"jp":"しけん","d":"mid"},{"jp":"テスト","d":"mid"}],"지진":[{"jp":"じしん","d":"mid"}],"질문":[{"jp":"しつもん","d":"mid"}],"실례":[{"jp":"しつれい","d":"mid"}],"자전거":[{"jp":"じてんしゃ","d":"mid"}],"자신/자기":[{"jp":"じぶん","d":"mid"}],"사진":[{"jp":"しゃしん","d":"mid"}],"자유":[{"jp":"じゆう","d":"mid"}],"주소":[{"jp":"じゅうしょ","d":"mid"}],"수업":[{"jp":"じゅぎょう","d":"mid"}],"숙제":[{"jp":"しゅくだい","d":"mid"}],"남편/주인":[{"jp":"しゅじん","d":"mid"}],"준비":[{"jp":"じゅんび","d":"mid"},{"jp":"ようい","d":"mid"}],"잘함/능숙":[{"jp":"じょうず","d":"mid"}],"간장":[{"jp":"しょうゆ","d":"mid"}],"식사":[{"jp":"しょくじ","d":"mid"}],"신호":[{"jp":"しんごう","d":"mid"}],"인구":[{"jp":"じんこう","d":"mid"}],"친절":[{"jp":"しんせつ","d":"mid"}],"신년":[{"jp":"しんねん","d":"mid"}],"신문":[{"jp":"しんぶん","d":"mid"}],"수영":[{"jp":"すいえい","d":"mid"}],"생활":[{"jp":"せいかつ","d":"mid"}],"학생(중고)":[{"jp":"せいと","d":"mid"}],"세계":[{"jp":"せかい","d":"mid"}],"설명":[{"jp":"せつめい","d":"mid"}],"지난달":[{"jp":"せんげつ","d":"mid"}],"선생님":[{"jp":"せんせい","d":"mid"}],"세탁":[{"jp":"せんたく","d":"mid"}],"선배":[{"jp":"せんぱい","d":"mid"}],"청소":[{"jp":"そうじ","d":"mid"}],"상담":[{"jp":"そうだん","d":"mid"}],"대회":[{"jp":"たいかい","d":"mid"}],"부엌":[{"jp":"だいどころ","d":"mid"}],"태풍":[{"jp":"たいふう","d":"mid"}],"건물":[{"jp":"たてもの","d":"mid"}],"지역":[{"jp":"ちいき","d":"mid"}],"지하철":[{"jp":"ちかてつ","d":"mid"}],"지각":[{"jp":"ちこく","d":"mid"}],"그릇/찻잔":[{"jp":"ちゃわん","d":"mid"}],"주의":[{"jp":"ちゅうい","d":"mid"}],"중지":[{"jp":"ちゅうし","d":"mid"}],"주차":[{"jp":"ちゅうしゃ","d":"mid"}],"책상":[{"jp":"つくえ","d":"low"}],"점원":[{"jp":"てんいん","d":"mid"}],"날씨":[{"jp":"てんき","d":"mid"}],"전기/전등":[{"jp":"でんき","d":"mid"}],"전철":[{"jp":"でんしゃ","d":"mid"}],"전화":[{"jp":"でんわ","d":"mid"}],"동물":[{"jp":"どうぶつ","d":"mid"}],"시계":[{"jp":"とけい","d":"mid"}],"장소/곳":[{"jp":"ところ","d":"mid"}],"도서관":[{"jp":"としょかん","d":"mid"}],"이름":[{"jp":"なまえ","d":"mid"}],"일기":[{"jp":"にっき","d":"mid"}],"짐":[{"jp":"にもつ","d":"mid"}],"인기":[{"jp":"にんき","d":"mid"}],"가격":[{"jp":"ねだん","d":"mid"}],"버스정류장":[{"jp":"バスてい","d":"mid"}],"방송 프로그램":[{"jp":"ばんぐみ","d":"mid"}],"번호":[{"jp":"ばんごう","d":"mid"}],"비행기":[{"jp":"ひこうき","d":"mid"}],"병/질병":[{"jp":"びょうき","d":"mid"}],"봉투/주머니":[{"jp":"ふくろ","d":"mid"}],"부장":[{"jp":"ぶちょう","d":"mid"}],"문화":[{"jp":"ぶんか","d":"mid"}],"문화제":[{"jp":"ぶんかさい","d":"mid"}],"답장/대답":[{"jp":"へんじ","d":"mid"}],"도시락":[{"jp":"べんとう","d":"mid"}],"모자":[{"jp":"ぼうし","d":"mid"}],"만화":[{"jp":"まんが","d":"mid"}],"남쪽":[{"jp":"みなみ","d":"mid"}],"문제":[{"jp":"もんだい","d":"mid"}],"야구":[{"jp":"やきゅう","d":"mid"}],"약속":[{"jp":"やくそく","d":"mid"}],"채소":[{"jp":"やさい","d":"mid"}],"저녁(해질녘)":[{"jp":"ゆうがた","d":"mid"}],"볼일/용무":[{"jp":"ようじ","d":"mid"}],"예정":[{"jp":"よてい","d":"mid"}],"예보":[{"jp":"よほう","d":"mid"}],"예약":[{"jp":"よやく","d":"mid"}],"내년":[{"jp":"らいねん","d":"mid"}],"이유":[{"jp":"りゆう","d":"mid"}],"이용":[{"jp":"りよう","d":"mid"}],"요리":[{"jp":"りょうり","d":"mid"}],"여행":[{"jp":"りょこう","d":"mid"}],"사과":[{"jp":"りんご","d":"mid"}],"냉장고":[{"jp":"れいぞうこ","d":"mid"}],"역사":[{"jp":"れきし","d":"mid"}],"연락":[{"jp":"れんらく","d":"mid"}],"노란색":[{"jp":"きいろ","d":"mid"}],"근처/가까운 곳":[{"jp":"ちかく","d":"mid"}],"많이/대부분":[{"jp":"おおく","d":"mid"}],"빠르기/속도":[{"jp":"はやさ","d":"mid"}],"휴일/쉬는 시간":[{"jp":"やすみ","d":"mid"}],"쇼핑":[{"jp":"かいもの","d":"mid"}],"탈것":[{"jp":"のりもの","d":"mid"}],"분실물":[{"jp":"わすれもの","d":"mid"}],"점심 시간":[{"jp":"ひるやすみ","d":"mid"}],"아침밥":[{"jp":"あさごはん","d":"mid"}],"환경":[{"jp":"かんきょう","d":"high"}],"급식":[{"jp":"きゅうしょく","d":"high"}],"우유":[{"jp":"ぎゅうにゅう","d":"high"}],"교실":[{"jp":"きょうしつ","d":"high"}],"형제자매":[{"jp":"きょうだい","d":"high"}],"이번 주":[{"jp":"こんしゅう","d":"high"}],"습관":[{"jp":"しゅうかん","d":"high"}],"주말":[{"jp":"しゅうまつ","d":"high"}],"출석":[{"jp":"しゅっせき","d":"high"}],"출발":[{"jp":"しゅっぱつ","d":"high"}],"소개":[{"jp":"しょうかい","d":"high"}],"초등학교":[{"jp":"しょうがっこう","d":"high"}],"초대":[{"jp":"しょうたい","d":"high"}],"장래/미래":[{"jp":"しょうらい","d":"high"}],"식당":[{"jp":"しょくどう","d":"high"}],"지난주":[{"jp":"せんしゅう","d":"high"}],"졸업":[{"jp":"そつぎょう","d":"high"}],"생일":[{"jp":"たんじょうび","d":"high"}],"중학교":[{"jp":"ちゅうがっこう","d":"high"}],"입원":[{"jp":"にゅういん","d":"high"}],"입학":[{"jp":"にゅうがく","d":"high"}],"인형":[{"jp":"にんぎょう","d":"high"}],"병원":[{"jp":"びょういん","d":"high"}],"공부":[{"jp":"べんきょう","d":"high"}],"우체국":[{"jp":"ゆうびんきょく","d":"high"}],"다음 주":[{"jp":"らいしゅう","d":"high"}],"유학":[{"jp":"りゅうがく","d":"high"}],"부모님":[{"jp":"りょうしん","d":"high"}],"연습":[{"jp":"れんしゅう","d":"high"}],"학교":[{"jp":"がっこう","d":"high"}],"우표":[{"jp":"きって","d":"mid"}],"수학":[{"jp":"すうがく","d":"mid"}],"오후":[{"jp":"ごご","d":"mid"}],"가족":[{"jp":"かぞく","d":"low"}],"가방":[{"jp":"かばん","d":"mid"}],"지하철역":[{"jp":"ちかてつのえき","d":"high"}],"셔츠":[{"jp":"シャツ","d":"low"}],"문":[{"jp":"ドア","d":"low"}],"버스":[{"jp":"バス","d":"low"}],"빵":[{"jp":"パン","d":"low"}],"빌딩":[{"jp":"ビル","d":"low"}],"펜":[{"jp":"ペン","d":"low"}],"아이스크림":[{"jp":"アイスクリーム","d":"mid"}],"애니메이션":[{"jp":"アニメ","d":"mid"}],"에어컨":[{"jp":"エアコン","d":"mid"}],"카드":[{"jp":"カード","d":"mid"}],"카페":[{"jp":"カフェ","d":"mid"}],"카메라":[{"jp":"カメラ","d":"mid"}],"가라오케":[{"jp":"カラオケ","d":"mid"}],"카레라이스":[{"jp":"カレーライス","d":"mid"}],"케이크":[{"jp":"ケーキ","d":"mid"}],"휴대폰":[{"jp":"ケータイ","d":"mid"}],"게임":[{"jp":"ゲーム","d":"mid"}],"커피":[{"jp":"コーヒー","d":"mid"}],"콜라":[{"jp":"コーラ","d":"mid"}],"컵":[{"jp":"コップ","d":"mid"}],"복사":[{"jp":"コピー","d":"mid"}],"콘서트":[{"jp":"コンサート","d":"mid"}],"편의점":[{"jp":"コンビニ","d":"mid"}],"샤워":[{"jp":"シャワー","d":"mid"}],"주스":[{"jp":"ジュース","d":"mid"}],"조깅":[{"jp":"ジョギング","d":"mid"}],"정장":[{"jp":"スーツ","d":"mid"}],"슈퍼마켓":[{"jp":"スーパー","d":"mid"}],"스커트":[{"jp":"スカート","d":"mid"}],"스키":[{"jp":"スキー","d":"mid"}],"스푼":[{"jp":"スプーン","d":"mid"}],"스포츠":[{"jp":"スポーツ","d":"mid"}],"바지":[{"jp":"ズボン","d":"mid"}],"스마트폰":[{"jp":"スマートフォン","d":"mid"},{"jp":"スマホ","d":"mid"}],"댄스":[{"jp":"ダンス","d":"mid"}],"티켓":[{"jp":"チケット","d":"mid"}],"테이블":[{"jp":"テーブル","d":"mid"}],"테니스":[{"jp":"テニス","d":"mid"}],"백화점":[{"jp":"デパート","d":"mid"}],"텔레비전":[{"jp":"テレビ","d":"mid"}],"화장실":[{"jp":"トイレ","d":"mid"}],"드라마":[{"jp":"ドラマ","d":"mid"}],"뉴스":[{"jp":"ニュース","d":"mid"}],"넥타이":[{"jp":"ネクタイ","d":"mid"}],"노트":[{"jp":"ノート","d":"mid"}],"파티":[{"jp":"パーティー","d":"mid"}],"여권":[{"jp":"パスポート","d":"mid"}],"컴퓨터":[{"jp":"パソコン","d":"mid"}],"피아노":[{"jp":"ピアノ","d":"mid"}],"수영장":[{"jp":"プール","d":"mid"}],"침대":[{"jp":"ベッド","d":"mid"}],"반려동물":[{"jp":"ペット","d":"mid"}],"홈스테이":[{"jp":"ホームステイ","d":"mid"}],"공":[{"jp":"ボール","d":"mid"}],"버튼":[{"jp":"ボタン","d":"mid"}],"호텔":[{"jp":"ホテル","d":"mid"}],"자원봉사":[{"jp":"ボランティア","d":"mid"}],"메일":[{"jp":"メール","d":"mid"}],"메뉴":[{"jp":"メニュー","d":"mid"}],"라면":[{"jp":"ラーメン","d":"mid"}],"레스토랑":[{"jp":"レストラン","d":"mid"}],"리포트":[{"jp":"レポート","d":"mid"}],"인터넷":[{"jp":"インターネット","d":"high"}],"축구":[{"jp":"サッカー","d":"high"}],"농구":[{"jp":"バスケットボール","d":"high"}]};
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+const D_MAP = {low:"ha", mid:"jung", high:"sang"};
 
-                wordData = { sang: [], jung: [], ha: [] };
-                
-                // 2행부터 데이터 추출 (A:상, B:중, C:하)
-                json.slice(1).forEach(row => {
-                    if(row[0]) wordData.sang.push(row[0]);
-                    if(row[1]) wordData.jung.push(row[1]);
-                    if(row[2]) wordData.ha.push(row[2]);
-                });
+const ROWS = {
+  hiragana:[
+    {ko:"아행",chars:["あ","い","う","え","お"]},
+    {ko:"카행",chars:["か","き","く","け","こ"]},
+    {ko:"사행",chars:["さ","し","す","せ","そ"]},
+    {ko:"타행",chars:["た","ち","つ","て","と"]},
+    {ko:"나행",chars:["な","に","ぬ","ね","の"]},
+    {ko:"하행",chars:["は","ひ","ふ","へ","ほ"]},
+    {ko:"마행",chars:["ま","み","む","め","も"]},
+    {ko:"야행+와행",chars:["や","ゆ","よ","わ","を","ん"]},
+    {ko:"라행",chars:["ら","り","る","れ","ろ"]},
+  ],
+  katakana:[
+    {ko:"아행",chars:["ア","イ","ウ","エ","オ"]},
+    {ko:"카행",chars:["カ","キ","ク","ケ","コ"]},
+    {ko:"사행",chars:["サ","シ","ス","セ","ソ"]},
+    {ko:"타행",chars:["タ","チ","ツ","テ","ト"]},
+    {ko:"나행",chars:["ナ","ニ","ヌ","ネ","ノ"]},
+    {ko:"하행",chars:["ハ","ヒ","フ","ヘ","ホ"]},
+    {ko:"마행",chars:["マ","ミ","ム","メ","モ"]},
+    {ko:"야행+와행",chars:["ヤ","ユ","ヨ","ワ","ヲ","ン"]},
+    {ko:"라행",chars:["ラ","リ","ル","レ","ロ"]},
+  ]
+};
 
-                document.getElementById('file-status').innerText = `✅ ${file.name} 준비 완료!`;
-                document.getElementById('generate-btn').disabled = false;
-            };
-            reader.readAsArrayBuffer(file);
-        });
+let ST = {script:"hiragana",selRows:[],counts:{sang:1,jung:2,ha:1},words:[],row1:null,row2:null,selWords:[]};
 
-        // 2. 랜덤 추출 및 화면 전환
-        function generateTest() {
-            const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
-            
-            // 난이도별 추출 (상1, 중2, 하1 예시)
-            const final = [
-                ...shuffle(wordData.sang).slice(0, 1),
-                ...shuffle(wordData.jung).slice(0, 2),
-                ...shuffle(wordData.ha).slice(0, 1)
-            ];
+function goScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const btn=document.getElementById("reveal-btn");
+  btn.style.display=(id==="screen-tool")?"block":"none";
+  btn.style.pointerEvents=(id==="screen-tool")?"auto":"none";
+  window.scrollTo(0,0);
+}
 
-            const grid = document.getElementById('word-grid');
-            grid.innerHTML = final.map((word, i) => `
-                <div class="word-item">
-                    <span style="font-size:0.8rem; color:#999;">${i+1}</span><br>${word}
-                </div>
-            `).join('');
+// S1
+function selectScript(type){
+  ST.script=type; ST.selRows=[];
+  const rows=ROWS[type];
+  const scriptLabel=type==="hiragana"?"히라가나":"가타카나";
+  document.getElementById("settings-lbl").textContent=scriptLabel+" 설정";
+  document.getElementById("q1-script-label").textContent=scriptLabel;
+  document.getElementById("tool-title-h1").textContent=scriptLabel+" 쓰기";
+  document.getElementById("q2-text").textContent="다음 단어에 해당하는 일본어를 "+scriptLabel+"로 쓰시오.";
+  // 기본: 앞 5행 → ①구역, 뒤 4행 → ②구역
+  initZones(type);
+  updateRowInfo(); updateTotal();
+  goScreen("screen-settings");
+}
 
-            document.getElementById('main-screen').style.display = 'none';
-            document.getElementById('test-screen').style.display = 'flex';
-        }
-    </script>
+// zone1 = ①행 후보(선택된 행들), zone2 = ②행 후보(나머지)
+let zone1Rows=[]; // 인덱스 배열
+let zone2Rows=[]; // 인덱스 배열
+
+function initZones(type){
+  const rows=ROWS[type];
+  // 기본: 앞 절반 → zone1, 뒤 절반 → zone2
+  const half=Math.ceil(rows.length/2);
+  zone1Rows=rows.slice(0,half).map((_,i)=>i);
+  zone2Rows=rows.slice(half).map((_,i)=>i+half);
+  ST.selRows=zone1Rows; // 기존 호환
+  renderZones();
+}
+
+function renderZones(){
+  const rows=ROWS[ST.script];
+  const z1=document.getElementById("zone1-pills");
+  const z2=document.getElementById("zone2-pills");
+
+  z1.innerHTML=zone1Rows.length
+    ? zone1Rows.map(i=>`<span class="rs-pill p1" onclick="moveToZone2(${i})">${rows[i].ko} <span class="pill-arrow">↓</span></span>`).join("")
+    : `<span class="rs-empty">여기에 행이 없습니다</span>`;
+
+  z2.innerHTML=zone2Rows.length
+    ? zone2Rows.map(i=>`<span class="rs-pill p2" onclick="moveToZone1(${i})">${rows[i].ko} <span class="pill-arrow">↑</span></span>`).join("")
+    : `<span class="rs-empty">여기에 행이 없습니다</span>`;
+
+  ST.selRows=zone1Rows;
+  updateRowInfo();
+}
+
+function moveToZone2(idx){
+  if(zone1Rows.length<=1){
+    const box=document.getElementById("row-info-box");
+    box.style.background="#ffeaea"; box.style.borderColor="#f5c6c2";
+    box.textContent="⚠️ ①행 구역에 최소 1개는 있어야 해요.";
+    setTimeout(()=>{box.style.background="";box.style.borderColor="";updateRowInfo();},2000);
+    return;
+  }
+  zone1Rows=zone1Rows.filter(i=>i!==idx);
+  zone2Rows=[...zone2Rows,idx].sort((a,b)=>a-b);
+  renderZones();
+}
+
+function moveToZone1(idx){
+  if(zone2Rows.length<=1){
+    const box=document.getElementById("row-info-box");
+    box.style.background="#ffeaea"; box.style.borderColor="#f5c6c2";
+    box.textContent="⚠️ ②행 구역에 최소 1개는 있어야 해요.";
+    setTimeout(()=>{box.style.background="";box.style.borderColor="";updateRowInfo();},2000);
+    return;
+  }
+  zone2Rows=zone2Rows.filter(i=>i!==idx);
+  zone1Rows=[...zone1Rows,idx].sort((a,b)=>a-b);
+  renderZones();
+}
+
+function updateRowInfo(){
+  const rows=ROWS[ST.script];
+  const box=document.getElementById("row-info-box");
+  if(!zone1Rows.length||!zone2Rows.length){
+    box.textContent="⚠️ 각 구역에 1개 이상의 행이 있어야 합니다.";
+    return;
+  }
+  const z1names=zone1Rows.map(i=>rows[i].ko).join(", ");
+  const z2names=zone2Rows.map(i=>rows[i].ko).join(", ");
+  box.innerHTML=`<strong style="color:var(--green-t);">① 후보:</strong> ${z1names} &nbsp;|&nbsp; <strong style="color:#3a5ea8;">② 후보:</strong> ${z2names}`;
+}
+function changeCount(key,delta){
+  const t=ST.counts.sang+ST.counts.jung+ST.counts.ha;
+  if(delta<0&&t<=1)return;
+  ST.counts[key]=Math.max(0,Math.min(8,ST.counts[key]+delta));
+  document.getElementById("val-"+key).textContent=ST.counts[key];
+  updateTotal();
+}
+function updateTotal(){document.getElementById("total-count").textContent=ST.counts.sang+ST.counts.jung+ST.counts.ha;}
+function goToWords(){
+  if(!zone1Rows.length||!zone2Rows.length){alert("각 구역에 행을 1개 이상 배치해 주세요.");return;}
+  ["sang","jung","ha"].forEach(d=>{
+    document.getElementById("need-"+d).textContent=ST.counts[d];
+    document.getElementById("kn-"+d).textContent=ST.counts[d];
+  });
+  renderKanban(); updateStatus(); goScreen("screen-words");
+}
+
+// S3 드래그앤드롭
+let dragIdx = null;
+
+function lookupKr(kr){
+  const key=kr.trim();
+  if(VOCAB_DB[key])return{diff:D_MAP[VOCAB_DB[key][0].d]||"jung",fromDB:true};
+  return{diff:null,fromDB:false};
+}
+
+function addWord(){
+  const inp=document.getElementById("word-input");
+  const raw=inp.value.trim(); if(!raw)return;
+  raw.split(/[,，、\s]+/).map(w=>w.trim()).filter(Boolean).forEach(kr=>{
+    if(!kr||ST.words.find(w=>w.kr===kr))return;
+    const{diff,fromDB}=lookupKr(kr);
+    ST.words.push({kr,diff,fromDB});
+  });
+  inp.value=""; renderKanban(); updateStatus();
+}
+
+document.getElementById("xl-input").addEventListener("change",e=>{
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const wb=XLSX.read(ev.target.result,{type:"binary"});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+    const colDiff=["sang","jung","ha"];
+    rows.forEach(row=>{
+      for(let col=0;col<3;col++){
+        const val=row[col]; if(!val)continue;
+        const kr=String(val).trim();
+        if(!kr||kr==="A"||kr==="B"||kr==="C"||kr==="상"||kr==="중"||kr==="하")continue;
+        if(ST.words.find(w=>w.kr===kr))continue;
+        const{diff:dbDiff,fromDB}=lookupKr(kr);
+        const diff=colDiff[col]; // 엑셀 열 위치 우선, DB는 참고만
+        ST.words.push({kr,diff,fromDB});
+      }
+    });
+    renderKanban(); updateStatus();
+  };
+  reader.readAsBinaryString(file); e.target.value="";
+});
+
+function delWord(idx){ST.words.splice(idx,1);renderKanban();updateStatus();}
+function clearWords(){if(!confirm("모든 단어를 삭제할까요?"))return;ST.words=[];renderKanban();updateStatus();}
+
+function renderKanban(){
+  document.getElementById("word-count").textContent=ST.words.length;
+  const groups={sang:[],jung:[],ha:[],null:[]};
+  ST.words.forEach((w,i)=>{ const k=w.diff||"null"; (groups[k]=groups[k]||[]).push({...w,i}); });
+
+  ["sang","jung","ha"].forEach(d=>{
+    const c=document.getElementById("cards-"+d);
+    c.innerHTML=groups[d].length
+      ? groups[d].map(w=>cardHTML(w)).join("")
+      : `<div class="kb-empty">여기에 드래그하세요</div>`;
+    document.getElementById("kc-"+d).textContent=groups[d].length;
+  });
+
+  // 미분류
+  const unList=groups["null"]||[];
+  const wrap=document.getElementById("unassigned-wrap");
+  wrap.style.display=unList.length?"block":"none";
+  if(unList.length){
+    document.getElementById("cards-unassigned").innerHTML=unList.map(w=>cardHTML(w)).join("");
+    document.getElementById("kc-unassigned").textContent=unList.length;
+  }
+}
+
+function cardHTML(w){
+  return `<div class="dcard${!w.diff?" needs":""}" draggable="true"
+    ondragstart="onDragStart(event,${w.i})"
+    ondragend="onDragEnd(event)">
+    <span class="dc-kr">${w.kr}</span>
+    <span class="dc-right">
+      <span class="dc-db ${w.fromDB?"found":"manual"}">${w.fromDB?"DB":"미등록"}</span>
+      <button class="dc-del" onclick="delWord(${w.i})">✕</button>
+    </span>
+  </div>`;
+}
+
+function onDragStart(e,idx){dragIdx=idx;setTimeout(()=>e.target.classList.add("dragging"),0);}
+function onDragEnd(e){e.target.classList.remove("dragging");document.querySelectorAll(".kb-col").forEach(c=>c.classList.remove("drag-over"));}
+function onDragOver(e,diff){e.preventDefault();const id=diff?"col-"+diff:"col-unassigned";document.getElementById(id).classList.add("drag-over");}
+function onDragLeave(e){e.currentTarget.classList.remove("drag-over");}
+function onDrop(e,diff){
+  e.preventDefault();e.currentTarget.classList.remove("drag-over");
+  if(dragIdx===null)return;
+  ST.words[dragIdx].diff=diff;
+  dragIdx=null; renderKanban(); updateStatus();
+}
+
+function updateStatus(){
+  const sang=ST.words.filter(w=>w.diff==="sang").length;
+  const jung=ST.words.filter(w=>w.diff==="jung").length;
+  const ha  =ST.words.filter(w=>w.diff==="ha").length;
+  const noDiff=ST.words.filter(w=>!w.diff).length;
+  document.getElementById("st-sang").textContent=sang;
+  document.getElementById("st-jung").textContent=jung;
+  document.getElementById("st-ha").textContent=ha;
+
+  const warns=[];
+  if(noDiff>0)warns.push(`⚠️ 미설정 ${noDiff}개`);
+  if(sang<ST.counts.sang)warns.push(`🔴 상 부족(${sang}/${ST.counts.sang})`);
+  if(jung<ST.counts.jung)warns.push(`🟠 중 부족(${jung}/${ST.counts.jung})`);
+  if(ha<ST.counts.ha)warns.push(`🟢 하 부족(${ha}/${ST.counts.ha})`);
+
+  const warnEl=document.getElementById("status-warn");
+  const guideEl=document.getElementById("status-guide");
+  if(warns.length){warnEl.textContent=warns.join(" · ");warnEl.style.display="";guideEl.style.display="none";}
+  else{warnEl.style.display="none";guideEl.style.display="";}
+
+  document.getElementById("tool-btn").disabled=!(!noDiff&&sang>=ST.counts.sang&&jung>=ST.counts.jung&&ha>=ST.counts.ha);
+}
+
+// 랜덤 생성
+function pick(arr,n){const a=[...arr],r=[];while(r.length<n&&a.length){const i=Math.floor(Math.random()*a.length);r.push(a.splice(i,1)[0]);}return r;}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildRandom(){
+  const rows=ROWS[ST.script];
+  ST.row1=rows[zone1Rows[Math.floor(Math.random()*zone1Rows.length)]];
+  ST.row2=rows[zone2Rows[Math.floor(Math.random()*zone2Rows.length)]];
+  ST.selWords=shuffle([
+    ...pick(ST.words.filter(w=>w.diff==="sang"),ST.counts.sang),
+    ...pick(ST.words.filter(w=>w.diff==="jung"),ST.counts.jung),
+    ...pick(ST.words.filter(w=>w.diff==="ha"),  ST.counts.ha),
+  ]);
+}
+
+// S4
+function goToTool(){buildRandom();buildTool();goScreen("screen-tool");}
+function reGenerate(){buildRandom();buildTool();reveal();}
+
+function buildTool(){
+  const nums=["①","②","③","④","⑤","⑥","⑦","⑧"];
+  const total=ST.selWords.length;
+
+  // Q1 행 배지 초기화 (빈 배지 2개)
+  document.getElementById("q1-badges-inline").innerHTML=
+    `<span class="row-badge-inline" id="rb1" style="min-width:clamp(72px,10vw,120px);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+     <span class="row-badge-inline" id="rb2" style="min-width:clamp(72px,10vw,120px);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>`;
+
+  // Q2 단어 그리드 (카드 내용 비움)
+  const cols=total<=2?total:total<=4?2:total<=6?3:4;
+  const grid=document.getElementById("word-grid");
+  grid.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  grid.innerHTML=ST.selWords.map((w,i)=>`
+    <div class="word-card-wrap">
+      <div class="word-num">${nums[i]||i+1}</div>
+      <div class="word-card" id="wc${i}">
+        <div class="card-kr" id="wk${i}"></div>
+      </div>
+    </div>`).join("");
+
+  const btn=document.getElementById("reveal-btn");
+  btn.textContent="Click Here";
+  btn.onclick=reveal;
+}
+
+function reveal(){
+  if(!ST.row1||!ST.row2){buildRandom();}
+
+  // Q1 행 배지 채우기
+  const rb1=document.getElementById("rb1");
+  const rb2=document.getElementById("rb2");
+  rb1.textContent=ST.row1.ko;
+  rb1.className="row-badge-inline on"+(ST.row1.ko.length>3?" long":"");
+  rb2.textContent=ST.row2.ko;
+  rb2.className="row-badge-inline on"+(ST.row2.ko.length>3?" long":"");
+
+  // Q2 단어 채우기 (애니메이션 없이 즉시 표시)
+  ST.selWords.forEach((w,i)=>{
+    const wk=document.getElementById("wk"+i);
+    if(wk){wk.textContent=w.kr;wk.classList.add("on");}
+  });
+
+  const btn=document.getElementById("reveal-btn");
+  btn.textContent="🔀 다시 생성";
+  btn.onclick=reGenerate;
+}
+</script>
 </body>
 </html>
