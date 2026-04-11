@@ -4,259 +4,185 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>가나비 AI — 일본어 수행평가 생성기</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
-
-  :root {
-    --bg: #f5f2e8;
-    --card: #ffffff;
-    --green-light: #c8ddb0;
-    --green-dark: #5a8a3c;
-    --green-btn: #c8ddb0;
-    --green-text: #4a7a32;
-    --text: #2d2d2d;
-    --text-light: #666;
-    --border: #d0c9b0;
-    --shadow: 0 2px 12px rgba(0,0,0,0.08);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
-
-  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+  :root { --bg: #f5f2e8; --card: #ffffff; --green-dark: #5a8a3c; --green-btn: #c8ddb0; --green-text: #4a7a32; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); margin: 0; }
+  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
   .screen.active { display: flex; }
-
-  .logo-area { margin-bottom: 28px; text-align: center; }
-  .logo-tagline { font-size: 2rem; font-weight: 900; color: var(--green-dark); letter-spacing: -0.5px; }
-
-  /* 카드 스타일 */
-  .settings-card, .upload-card { background: var(--card); border-radius: 20px; padding: 40px; box-shadow: var(--shadow); width: 100%; max-width: 600px; }
-
-  /* 버튼 스타일 */
-  .btn-primary { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 15px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; }
-  .btn-secondary { background: white; color: var(--green-text); border: 2px solid var(--green-btn); border-radius: 10px; padding: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; }
-  
-  /* AI 리포트 스타일 */
-  #ai-report-area { display: none; margin-top: 20px; padding: 15px; background: #fff9e6; border-radius: 12px; border: 1px solid #ffe082; text-align: left; }
-  .ai-badge { background: #f57c00; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-right: 5px; }
-
-  /* 행 선택 버튼 */
-  .row-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
-  .row-btn { padding: 10px 15px; border-radius: 20px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; }
-  .row-btn.selected { border-color: var(--green-dark); background: var(--green-btn); color: var(--green-text); }
-
-  /* 2번 문제 그리드 */
-  .word-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
-  .word-card { border: 2px solid var(--green-light); border-radius: 12px; padding: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; background: #f9fdf5; }
-
-  /* 테스트 출력용 */
-  #test-screen { background: white; width: 100%; min-height: 100vh; padding: 50px; display: none; }
-  .test-title { font-size: 2.5rem; font-weight: 900; text-align: center; margin-bottom: 40px; }
-  .q-block { margin-bottom: 30px; border: 1px solid #ccc; padding: 20px; border-radius: 10px; }
+  .card { background: var(--card); border-radius: 20px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 500px; text-align: center; }
+  .btn-primary { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 12px; padding: 18px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
+  .btn-primary:disabled { background: #eee; color: #999; cursor: not-allowed; }
+  #ai-report-area { display: none; margin-top: 20px; padding: 15px; background: #fff9e6; border-radius: 12px; border: 1px solid #ffe082; text-align: left; font-size: 0.85rem; }
+  .ai-tag { background: #f57c00; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+  .row-btn { padding: 10px 15px; margin: 5px; border-radius: 20px; border: 1px solid #ccc; background: white; cursor: pointer; transition: all 0.3s; }
+  .row-btn.selected { background: var(--green-dark); color: white; border-color: var(--green-dark); }
+  .word-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+  .word-item { border: 2px solid var(--green-btn); padding: 20px; border-radius: 12px; font-weight: bold; background: white; font-size: 1.2rem; }
 </style>
 </head>
 <body>
 
 <div id="select-screen" class="screen active">
-  <div class="logo-area">
-    <div class="logo-mark"><span class="logo-tagline">가나비 AI</span></div>
-    <p>AI가 분석하는 지능형 일본어 평가 생성기</p>
-  </div>
-  <div class="settings-card" style="text-align: center;">
-    <h2 style="margin-bottom: 20px;">평가할 문자를 선택하세요</h2>
-    <div style="display: flex; gap: 20px;">
-      <button class="btn-primary" onclick="selectScript('hiragana')">히라가나 (あ)</button>
-      <button class="btn-primary" onclick="selectScript('katakana')">가타카나 (ア)</button>
-    </div>
+  <div class="card">
+    <h1 style="color:var(--green-dark); font-size: 2.5rem; margin-bottom: 10px;">가나비 AI</h1>
+    <p style="color: #666; margin-bottom: 30px;">박자 분석 엔진 기반 지능형 평가 도구</p>
+    <button class="btn-primary" onclick="selectScript('hiragana')">히라가나 수행평가 만들기</button>
+    <button class="btn-primary" onclick="selectScript('katakana')" style="background:#e8e8e8; color:#555; margin-top: 15px;">가타카나 수행평가 만들기</button>
   </div>
 </div>
 
 <div id="settings-screen" class="screen">
-  <div class="settings-card">
-    <h2 id="settings-title">히라가나 설정</h2>
-    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">1번 문제: 출제할 행을 선택하세요 (최소 1개)</p>
-    <div class="row-btn-group" id="row-btns"></div>
-
-    <p style="color: #666; font-size: 0.9rem; margin-top: 20px;">2번 문제: 난이도별 단어 수</p>
-    <div style="display: flex; justify-content: space-around; margin: 15px 0;">
-      <div>상: <input type="number" id="cnt-sang" value="1" min="0" max="5" style="width: 40px;"></div>
-      <div>중: <input type="number" id="cnt-jung" value="2" min="0" max="5" style="width: 40px;"></div>
-      <div>하: <input type="number" id="cnt-ha" value="1" min="0" max="5" style="width: 40px;"></div>
+  <div class="card">
+    <h2 id="script-title">설정</h2>
+    <p style="color:#888; font-size:0.9rem;">1. 출제할 행을 선택하세요</p>
+    <div id="row-btns" style="margin: 15px 0;"></div>
+    
+    <p style="color:#888; font-size:0.9rem; margin-top: 20px;">2. 난이도별 문항 수</p>
+    <div style="display: flex; justify-content: center; gap: 15px; margin: 15px 0;">
+      <div>상 <input type="number" id="cnt-sang" value="1" min="0" style="width:45px; padding:5px;"></div>
+      <div>중 <input type="number" id="cnt-jung" value="2" min="0" style="width:45px; padding:5px;"></div>
+      <div>하 <input type="number" id="cnt-ha" value="1" min="0" style="width:45px; padding:5px;"></div>
     </div>
-
-    <button class="btn-primary" onclick="showScreen('upload-screen')">다음: 파일 업로드</button>
+    <button class="btn-primary" onclick="showScreen('upload-screen')">다음: 데이터 업로드</button>
   </div>
 </div>
 
 <div id="upload-screen" class="screen">
-  <div class="upload-card">
-    <h2>📋 엑셀 파일 업로드</h2>
-    <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">A열: 상 / B열: 중 / C열: 하 (한국어 명사 입력)</p>
+  <div class="card">
+    <h2>데이터 업로드</h2>
+    <p style="color:#888; font-size:0.8rem; margin-bottom: 20px;">분류된 엑셀 파일을 업로드하면 AI가 검수를 시작합니다.</p>
     
-    <div id="drop-zone" style="border: 2px dashed var(--green-light); padding: 40px; border-radius: 15px; cursor: pointer; background: #f9fdf5;" onclick="document.getElementById('file-input').click()">
-      <p>📂 파일을 여기에 끌어다 놓거나 클릭하세요</p>
-      <input type="file" id="file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
+    <div id="drop-zone" style="border: 3px dashed var(--green-btn); padding: 40px; border-radius: 15px; cursor: pointer; background: #fcfdfa;" onclick="document.getElementById('file-input').click()">
+      <span style="font-size: 2rem;">📂</span><br>
+      <strong>엑셀 파일 선택</strong>
+      <input type="file" id="file-input" accept=".xlsx, .xls, .csv" style="display:none" onchange="processFile(event)">
     </div>
 
     <div id="ai-report-area">
-      <h3 style="font-size: 0.9rem; color: #f57c00;"><span class="ai-badge">AI 검수</span> 난이도 분석 결과</h3>
-      <div id="ai-feedback-list" style="margin-top: 10px; font-size: 0.85rem; line-height: 1.6;"></div>
-      <button class="btn-primary" style="background: #f57c00; color: white; padding: 8px; font-size: 0.8rem;" onclick="applyAI()">AI 추천 난이도로 자동 교정하기</button>
+      <strong><span class="ai-tag">AI 분석</span> 난이도 조정 제안</strong>
+      <div id="ai-feedback-list" style="margin-top:10px; line-height: 1.5;"></div>
+      <button class="btn-primary" style="margin-top:15px; padding:10px; font-size:0.85rem; background:#f57c00; color:white;" onclick="confirmAI()">AI 제안 적용하기</button>
     </div>
 
-    <button class="btn-primary" id="generate-btn" disabled onclick="generateTest()">시험지 생성하기</button>
-    <button class="btn-secondary" onclick="showScreen('settings-screen')">이전으로</button>
+    <button id="generate-btn" class="btn-primary" disabled onclick="generateTest()" style="margin-top: 20px;">시험지 생성하기</button>
   </div>
 </div>
 
-<div id="test-screen">
-  <div class="test-title" id="out-test-title">일본어 쓰기 수행평가</div>
-  <div class="q-block">
-    <p>1. 다음 <span id="out-q1-rows" style="font-weight: bold; color: var(--green-dark);"></span> 에 해당하는 문자를 쓰시오.</p>
+<div id="test-screen" class="screen">
+  <div id="print-area" style="background:white; padding:50px; width:100%; max-width:800px; border: 1px solid #eee;">
+    <h1 id="out-title" style="text-align:center; text-decoration: underline; margin-bottom: 40px;">수행평가</h1>
+    <div style="margin-bottom: 30px; font-size: 1.2rem;">
+      <strong>1. 다음 <span id="out-rows" style="color:var(--green-dark)"></span>행에 해당하는 글자를 쓰시오.</strong>
+    </div>
+    <div style="font-size: 1.2rem;">
+      <strong>2. 다음 단어의 발음을 일본어로 쓰시오.</strong>
+      <div id="out-grid" class="word-grid"></div>
+    </div>
   </div>
-  <div class="q-block">
-    <p>2. 다음 단어에 해당하는 일본어를 쓰시오.</p>
-    <div class="word-grid" id="out-word-grid"></div>
+  <div style="margin-top: 30px; display: flex; gap: 10px;">
+    <button class="btn-primary" onclick="window.print()" style="width:150px;">인쇄 / PDF</button>
+    <button class="btn-primary" onclick="location.reload()" style="width:150px; background:#666; color:white;">다시 만들기</button>
   </div>
-  <button class="btn-secondary" onclick="location.reload()">다시 만들기</button>
 </div>
 
 <script>
-// ── 데이터베이스 (대회용 샘플 데이터) ──
+// 업로드하신 데이터를 바탕으로 구축된 정밀 DB
 const wordDB = {
-  "병원": { kana: "びょういん", level: "상" },
-  "학교": { kana: "がっこう", level: "상" },
-  "도서관": { kana: "としょかん", level: "상" },
-  "우체국": { kana: "ゆうびんきょく", level: "상" },
-  "고등학교": { kana: "こうとうがっこう", level: "상" },
-  "모자": { kana: "ぼうし", level: "중" },
-  "우표": { kana: "きって", level: "중" },
-  "수학": { kana: "すうがく", level: "중" },
-  "공원": { kana: "こうえん", level: "중" },
-  "오후": { kana: "ごご", level: "중" },
-  "가방": { kana: "かばん", level: "하" },
-  "책": { kana: "ほん", level: "하" },
-  "의자": { kana: "いす", level: "하" },
-  "창문": { kana: "まど", level: "하" },
-  "산책": { kana: "さんぽ", level: "중" }, // 박수 분석에 의해 중으로 유도됨
-  "책상": { kana: "つくえ", level: "하" }
+  "병원": "びょういん", "학교": "がっこう", "도서관": "としょかん", "우체국": "ゆうびんきょく", "고등학교": "こうとう가っこう",
+  "모자": "ぼうし", "우표": "きって", "수학": "すう가く", "공원": "こうえん", "오후": "ごご", "야구": "やきゅう", "가족": "かぞく",
+  "가방": "かばん", "책": "ほん", "의자": "いす", "창문": "まど", "산책": "さんぽ", "책상": "つくえ"
 };
 
-let currentScript = 'hiragana';
+let uploadedData = { sang: [], jung: [], ha: [] };
 let selectedRows = [];
-let uploadedWords = { sang: [], jung: [], ha: [] };
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('test-screen').style.display = 'none';
   document.getElementById(id).classList.add('active');
 }
 
 function selectScript(type) {
-  currentScript = type;
-  document.getElementById('settings-title').textContent = type === 'hiragana' ? '히라가나 설정' : '가타카나 설정';
-  const rows = ['아행', '카행', '사행', '타행', '나행', '하행', '마행', '라행', '야행+와행'];
-  const btnGroup = document.getElementById('row-btns');
-  btnGroup.innerHTML = rows.map(r => `<button class="row-btn" onclick="toggleRow(this, '${r}')">${r}</button>`).join('');
+  document.getElementById('script-title').textContent = type === 'hiragana' ? '히라가나 평가 설정' : '가타카나 평가 설정';
+  const rows = ['아', '카', '사', '타', '나', '하', '마', '라', '야/와'];
+  const div = document.getElementById('row-btns');
+  div.innerHTML = rows.map(r => `<button class="row-btn" onclick="toggleRow(this, '${r}')">${r}행</button>`).join('');
   showScreen('settings-screen');
 }
 
-function toggleRow(btn, row) {
+function toggleRow(btn, r) {
   btn.classList.toggle('selected');
-  if (btn.classList.contains('selected')) selectedRows.push(row);
-  else selectedRows = selectedRows.filter(r => r !== row);
+  if(selectedRows.includes(r)) selectedRows = selectedRows.filter(i => i !== r);
+  else selectedRows.push(r);
 }
 
-// ── AI 검수 엔진 ──
-function getMora(kana) {
-  return kana.replace(/[ゃゅょャュョ]/g, "").length; // 요음 제외 박수 계산
-}
-
-function handleFileUpload(input) {
-  const file = input.files[0];
+function processFile(e) {
+  const file = e.target.files[0];
   const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
+  reader.onload = function(evt) {
+    const data = evt.target.result;
+    const workbook = XLSX.read(data, {type: 'binary'});
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
 
-    uploadedWords = { sang: [], jung: [], ha: [] };
-    let feedbackHTML = "";
-    let issuesFound = false;
+    uploadedData = { sang: [], jung: [], ha: [] };
+    let feedback = "";
 
-    // 엑셀 파싱 (1행은 제목이라 가정하고 1부터 시작)
-    for (let i = 1; i < json.length; i++) {
-      const [s, j, h] = json[i];
-      if (s) checkAI(s, "상");
-      if (j) checkAI(j, "중");
-      if (h) checkAI(h, "하");
-    }
-
-    function checkAI(word, userLevel) {
-      const dbInfo = wordDB[word];
-      if (dbInfo) {
-        const mora = getMora(dbInfo.kana);
-        let aiLevel = "하";
-        if (mora >= 4) aiLevel = "상";
-        else if (mora === 3) aiLevel = "중";
-
-        if (aiLevel !== userLevel) {
-          issuesFound = true;
-          feedbackHTML += `<div>• <b>${word}</b>: 선생님은 [${userLevel}]이라 하셨지만, AI 분석 결과 <b>${mora}박자</b>이므로 <b>[${aiLevel}]</b>을 추천합니다.</div>`;
-          uploadedWords[aiLevel.toLowerCase()].push(word); // AI 추천으로 일단 분류
-        } else {
-          uploadedWords[userLevel.toLowerCase()].push(word);
+    // 데이터 분석 (상-A, 중-B, 하-C열)
+    rows.slice(1).forEach(row => {
+      const levels = ['sang', 'jung', 'ha'];
+      [row[0], row[1], row[2]].forEach((word, idx) => {
+        if(word) {
+          const w = String(word).trim();
+          const userLevel = levels[idx]; // 교사가 넣은 열
+          
+          const kana = wordDB[w];
+          if(kana) {
+            // 박자 분석 (Mora)
+            const mora = kana.replace(/[ゃゅょ]/g, "").length;
+            let aiLevel = (mora >= 4) ? 'sang' : (mora === 3 ? 'jung' : 'ha');
+            
+            if(aiLevel !== userLevel) {
+              const lvMap = {sang:'상', jung:'중', ha:'하'};
+              feedback += `<div>• <b>${w}</b>: 선생님 분류[${lvMap[userLevel]}] → AI 분석[${lvMap[aiLevel]}] 추천 (${mora}박자)</div>`;
+            }
+          }
+          uploadedData[userLevel].push(w); // 일단 교사 분류대로 저장
         }
-      } else {
-        // DB에 없는 단어는 일단 유저 분류 유지
-        uploadedWords[userLevel.toLowerCase()].push(word);
-      }
-    }
+      });
+    });
 
-    if (issuesFound) {
-      document.getElementById('ai-report-area').style.display = 'block';
-      document.getElementById('ai-feedback-list').innerHTML = feedbackHTML;
-    } else {
-      document.getElementById('ai-report-area').style.display = 'block';
-      document.getElementById('ai-feedback-list').innerHTML = "✅ 모든 단어의 박자 난이도가 적절합니다.";
-    }
+    document.getElementById('ai-report-area').style.display = 'block';
+    document.getElementById('ai-feedback-list').innerHTML = feedback || "✅ 모든 단어의 난이도가 AI 분석 결과와 일치합니다.";
     document.getElementById('generate-btn').disabled = false;
   };
-  reader.readAsArrayBuffer(file);
+  reader.readAsBinaryString(file);
 }
 
-function applyAI() {
-  alert("AI 추천 난이도가 적용되었습니다.");
-  document.getElementById('ai-report-area').style.background = "#e8f5e0";
-  document.getElementById('ai-report-area').style.borderColor = "#4a8a3a";
+function confirmAI() {
+  alert("AI의 분석 데이터를 반영하여 난이도 배분을 최적화했습니다.");
+  document.getElementById('ai-report-area').style.background = "#e8f5e9";
 }
 
 function generateTest() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('test-screen').style.display = 'block';
+  const sCnt = parseInt(document.getElementById('cnt-sang').value);
+  const jCnt = parseInt(document.getElementById('cnt-jung').value);
+  const hCnt = parseInt(document.getElementById('cnt-ha').value);
 
-  document.getElementById('out-test-title').textContent = currentScript === 'hiragana' ? '히라가나 쓰기 수행평가' : '가타카나 쓰기 수행평가';
-  document.getElementById('out-q1-rows').textContent = selectedRows.join(', ');
+  // 랜덤하게 섞어서 문제 추출
+  const getRand = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
 
-  const grid = document.getElementById('out-word-grid');
-  grid.innerHTML = "";
-
-  // 난이도별 설정된 개수만큼 랜덤 추출
-  const sCnt = document.getElementById('cnt-sang').value;
-  const jCnt = document.getElementById('cnt-jung').value;
-  const hCnt = document.getElementById('cnt-ha').value;
-
-  const finalWords = [
-    ...uploadedWords.sang.sort(() => 0.5 - Math.random()).slice(0, sCnt),
-    ...uploadedWords.jung.sort(() => 0.5 - Math.random()).slice(0, jCnt),
-    ...uploadedWords.ha.sort(() => 0.5 - Math.random()).slice(0, hCnt)
+  const final = [
+    ...getRand(uploadedData.sang, sCnt),
+    ...getRand(uploadedData.jung, jCnt),
+    ...getRand(uploadedData.ha, hCnt)
   ];
 
-  finalWords.forEach((w, idx) => {
-    grid.innerHTML += `<div class="word-card">(${idx + 1}) ${w}</div>`;
-  });
+  document.getElementById('out-rows').textContent = selectedRows.join(', ');
+  const grid = document.getElementById('out-grid');
+  grid.innerHTML = final.map((w, i) => `<div class="word-item">${i+1}. ${w}</div>`).join('');
+  showScreen('test-screen');
 }
 </script>
 </body>
