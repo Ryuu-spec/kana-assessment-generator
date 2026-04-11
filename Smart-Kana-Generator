@@ -16,7 +16,6 @@
     --green-btn: #c8ddb0;
     --green-text: #4a7a32;
     --text: #2d2d2d;
-    --text-light: #666;
     --border: #d0c9b0;
     --shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
@@ -27,101 +26,66 @@
     font-family: 'Noto Sans KR', sans-serif;
     background: var(--bg);
     min-height: 100vh;
-    color: var(--text);
+    overflow-x: hidden;
   }
 
-  /* 화면 활성화 로직 보강 */
+  /* ── [핵심 수정] 화면 전환 및 클릭 방지 해제 ── */
   .screen {
-    display: none; /* 기본적으로 숨김 */
+    position: fixed; /* 화면들이 서로 겹치지 않도록 고정 */
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none; /* 기본 숨김 */
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    padding: 40px 20px;
+    background: var(--bg);
+    z-index: 1;
+    padding: 20px;
   }
   
-  /* active 클래스가 붙으면 flex로 노출 */
+  /* active일 때만 가장 위로 올리고 보여줌 */
   .screen.active { 
     display: flex !important; 
+    z-index: 999 !important; 
   }
 
-  .logo-area { margin-bottom: 28px; text-align: center; }
-  .logo-tagline {
-    font-size: clamp(1.4rem, 3.5vw, 1.9rem);
-    font-weight: 900;
-    color: var(--green-dark);
-    letter-spacing: -0.5px;
+  .select-card {
+    background: var(--card); border-radius: 20px; padding: 40px;
+    width: 100%; max-width: 500px; text-align: center; box-shadow: var(--shadow);
   }
 
-  .settings-card {
-    background: var(--card);
-    border-radius: 20px;
-    padding: clamp(24px, 5vw, 40px);
-    box-shadow: var(--shadow);
-    width: 100%;
-    max-width: 580px;
+  /* 버튼 클릭 영역 확보 */
+  .select-btn {
+    flex: 1; padding: 30px 10px; border-radius: 16px; border: 2px solid var(--border);
+    background: white; cursor: pointer; transition: all 0.2s;
+    position: relative; z-index: 1000; /* 버튼이 카드보다 위에 있도록 */
   }
+  .select-btn:hover { background: #f4f9ef; border-color: var(--green-dark); }
+  .select-kana { font-size: 2.5rem; font-weight: 700; color: var(--green-text); display: block; pointer-events: none; }
+  .select-label { pointer-events: none; font-weight: 700; }
 
-  .section-title {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--text-light);
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .row-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
   .row-btn {
-    padding: 9px 18px; border-radius: 20px;
-    border: 2px solid #d8d8d8; background: white;
-    cursor: pointer; transition: all 0.15s; font-weight: 700;
+    padding: 10px 15px; border-radius: 20px; border: 2px solid #ddd;
+    background: white; cursor: pointer; font-weight: 700;
   }
-  .row-btn.selected { border-color: var(--green-btn); background: var(--green-btn); color: var(--green-text); }
-
-  .stepper-group { display: flex; gap: 10px; flex-wrap: wrap; }
-  .stepper-item {
-    flex: 1; min-width: 100px; background: #f8f7f2;
-    border-radius: 12px; padding: 12px 10px; border: 1px solid var(--border); text-align: center;
-  }
-  .stepper-btn {
-    width: 28px; height: 28px; border-radius: 8px;
-    border: 2px solid var(--green-light); background: white;
-    cursor: pointer; font-weight: 900;
-  }
+  .row-btn.selected { background: var(--green-btn); color: var(--green-text); border-color: var(--green-btn); }
 
   .btn-primary {
     background: var(--green-btn); color: var(--green-text); border: none;
-    border-radius: 10px; padding: 13px 32px; font-size: 1rem; font-weight: 700;
-    width: 100%; cursor: pointer; margin-top: 10px;
+    border-radius: 10px; padding: 15px; font-size: 1.1rem; font-weight: 700;
+    width: 100%; cursor: pointer; margin-top: 20px;
   }
-  .btn-primary:disabled { background: #bbb; cursor: not-allowed; }
-
-  .select-card {
-    background: var(--card); border-radius: 20px; padding: 48px;
-    width: 100%; max-width: 500px; text-align: center; box-shadow: var(--shadow);
-  }
-  .select-btn-group { display: flex; gap: 16px; margin-top: 20px; }
-  .select-btn {
-    flex: 1; padding: 28px 16px; border-radius: 16px; border: 2px solid var(--border);
-    background: white; cursor: pointer; transition: all 0.15s;
-  }
-  .select-btn:hover { background: #f4f9ef; border-color: var(--green-btn); }
-  .select-kana { font-size: 2.2rem; font-weight: 700; color: var(--green-text); display: block; }
-
-  #test-screen { display: none; padding: 2vh 8vw; width: 100%; flex-direction: column; }
 </style>
 </head>
 <body>
 
-<div id="select-screen" class="screen active">
-  <div class="logo-area">
-    <span class="logo-tagline">가나 수행평가 생성기</span>
-    <p style="margin-top:10px; color:#666;">2022 개정 교육과정 기준 적용</p>
+<div id="select-screen" class="screen">
+  <div style="margin-bottom:30px; text-align:center;">
+    <h1 style="color:var(--green-dark); font-size:2rem; font-weight:900;">가나 수행평가 생성기</h1>
   </div>
   <div class="select-card">
-    <h2>평가할 문자를 선택하세요</h2>
-    <div class="select-btn-group">
+    <h2 style="margin-bottom:20px;">평가할 문자를 선택하세요</h2>
+    <div style="display:flex; gap:15px;">
       <button class="select-btn" onclick="selectScript('hiragana')">
         <span class="select-kana">あ</span>
         <span class="select-label">히라가나</span>
@@ -135,71 +99,77 @@
 </div>
 
 <div id="settings-screen" class="screen">
-  <div class="settings-card">
-    <div class="section-title">1번 문제 — 출제 행 선택</div>
-    <div class="row-btn-group" id="q1-row-btns"></div>
-    <div style="margin: 20px 0; border-top: 1px solid #eee;"></div>
-    <div class="section-title">2번 문제 — 난이도별 단어 수 (AI 자동분류)</div>
-    <div class="stepper-group">
-      <div class="stepper-item"><div>상</div><button onclick="changeCount('sang',-1)">-</button><span id="val-sang">1</span><button onclick="changeCount('sang',1)">+</button></div>
-      <div class="stepper-item"><div>중</div><button onclick="changeCount('jung',-1)">-</button><span id="val-jung">2</span><button onclick="changeCount('jung',1)">+</button></div>
-      <div class="stepper-item"><div>하</div><button onclick="changeCount('ha',-1)">-</button><span id="val-ha">1</span><button onclick="changeCount('ha',1)">+</button></div>
+  <div class="select-card" style="max-width:600px;">
+    <h3 style="margin-bottom:15px; text-align:left;">1. 출제 행 선택</h3>
+    <div id="q1-row-btns" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    
+    <div style="margin:25px 0; border-top:1px solid #eee;"></div>
+    
+    <h3 style="margin-bottom:15px; text-align:left;">2. 난이도별 단어 수</h3>
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px;">
+        상: <button onclick="changeCount('sang',-1)">-</button> <span id="val-sang">1</span> <button onclick="changeCount('sang',1)">+</button>
+      </div>
+      <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px;">
+        중: <button onclick="changeCount('jung',-1)">-</button> <span id="val-jung">2</span> <button onclick="changeCount('jung',1)">+</button>
+      </div>
+      <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px;">
+        하: <button onclick="changeCount('ha',-1)">-</button> <span id="val-ha">1</span> <button onclick="changeCount('ha',1)">+</button>
+      </div>
     </div>
-    <button class="btn-primary" onclick="showScreen('upload-screen')">다음 → 파일 업로드</button>
+    <button class="btn-primary" onclick="showScreen('upload-screen')">다음 단계로</button>
   </div>
 </div>
 
 <div id="upload-screen" class="screen">
-  <div class="settings-card" style="text-align:center;">
+  <div class="select-card">
     <h2>엑셀 파일 업로드</h2>
-    <div style="border:2px dashed #c8ddb0; padding:40px; margin:20px 0; cursor:pointer;" onclick="document.getElementById('file-input').click()">
-      파일을 선택하거나 끌어다 놓으세요
+    <p style="font-size:0.9rem; color:#666; margin:10px 0;">A열: 단어 / B열: 뜻</p>
+    <div style="border:2px dashed var(--green-light); padding:40px; margin:20px 0; border-radius:15px; cursor:pointer;" onclick="document.getElementById('file-input').click()">
+      이곳을 클릭하여 파일을 선택하세요
     </div>
     <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none;" onchange="handleFile(this)">
-    <div id="file-status" style="margin-bottom:15px; color:var(--green-dark);"></div>
+    <div id="file-status" style="margin-bottom:15px; font-weight:700; color:var(--green-dark);"></div>
     <button class="btn-primary" id="generate-btn" disabled onclick="generateTest()">문제 생성하기</button>
   </div>
 </div>
 
-<div id="test-screen" class="screen">
-  <h1 id="test-title">수행평가</h1>
-  <div id="q1-area" style="margin:20px 0; padding:20px; background:white; width:100%; border-radius:15px;"></div>
-  <div id="q2-grid" class="word-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; width:100%;"></div>
-  <button class="btn-primary" style="width:200px; margin-top:30px;" onclick="window.print()">인쇄하기</button>
+<div id="test-screen" class="screen" style="background:white; justify-content: flex-start; overflow-y:auto;">
+  <div id="print-area" style="width:100%; max-width:800px; padding:40px;">
+    <h1 id="test-title" style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:30px;">수행평가</h1>
+    <div id="q1-result" style="margin-bottom:30px;"></div>
+    <div id="q2-result" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;"></div>
+    <button class="btn-primary" style="margin-top:50px;" onclick="window.print()">인쇄하기</button>
+  </div>
 </div>
 
 <script>
+const ALL_ROWS = ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'];
 let currentScript = 'hiragana';
 let selectedFrontRows = [];
 let wordData = { sang: [], jung: [], ha: [] };
 const counts = { sang: 1, jung: 2, ha: 1 };
-const ALL_ROWS = ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'];
 
-// [수정] 화면 전환 함수 - display 속성을 직접 제어하여 충돌 방지
+// [핵심] 화면 전환 함수 - z-index와 display를 동시에 제어
 function showScreen(screenId) {
+  console.log("Moving to:", screenId); // 디버깅용
   const screens = document.querySelectorAll('.screen');
   screens.forEach(s => {
     s.classList.remove('active');
-    s.style.display = 'none';
   });
 
   const target = document.getElementById(screenId);
   if (target) {
     target.classList.add('active');
-    target.style.display = 'flex';
   }
 }
 
-// [수정] 첫 페이지 클릭 시 실행되는 함수
 function selectScript(type) {
   currentScript = type;
-  
-  // 행 버튼 생성
   const btnGroup = document.getElementById('q1-row-btns');
   btnGroup.innerHTML = ALL_ROWS.map(r => 
     `<button class="row-btn" onclick="toggleRow(this, '${r}')">${r}</button>`
   ).join('');
-  
   showScreen('settings-screen');
 }
 
@@ -214,18 +184,6 @@ function changeCount(key, delta) {
   document.getElementById('val-' + key).textContent = counts[key];
 }
 
-// AI 난이도 분석 (2022 개정 교육과정 기준)
-function analyzeDifficulty(word) {
-  let score = word.length <= 2 ? 1 : (word.length <= 4 ? 2 : 3);
-  if (/[ゃゅょャュョっッ]/.test(word)) score += 2;
-  if (/[ーが-ぼぱ-포]/.test(word)) score += 1;
-  
-  const easy = ["さくら", "すし", "いぬ", "アメリカ", "カメラ"];
-  if (easy.includes(word)) return "ha";
-  
-  return score <= 2 ? "ha" : (score <= 4 ? "jung" : "sang");
-}
-
 function handleFile(input) {
   const file = input.files[0];
   const reader = new FileReader();
@@ -237,36 +195,35 @@ function handleFile(input) {
     wordData = { sang: [], jung: [], ha: [] };
     rows.forEach(row => {
       if (row[0] && row[1]) {
-        const level = analyzeDifficulty(row[0].toString());
+        // 난이도 자동 분석 (간이 버전)
+        let level = row[0].length <= 2 ? 'ha' : (row[0].length <= 4 ? 'jung' : 'sang');
         wordData[level].push({ word: row[0], mean: row[1] });
       }
     });
-    document.getElementById('file-status').textContent = `분류 완료! (상:${wordData.sang.length} 중:${wordData.jung.length} 하:${wordData.ha.length})`;
+    document.getElementById('file-status').textContent = "분류 완료!";
     document.getElementById('generate-btn').disabled = false;
   };
   reader.readAsArrayBuffer(file);
 }
 
 function generateTest() {
-  const q1Row = selectedFrontRows[Math.floor(Math.random() * selectedFrontRows.length)] || "아행";
-  document.getElementById('q1-area').innerHTML = `<h3>1. 다음 행의 글자를 쓰시오: <span style="color:var(--green-dark)">${q1Row}</span></h3>`;
+  const q1Row = selectedFrontRows[0] || "아행";
+  document.getElementById('q1-result').innerHTML = `<h3>1. 다음 행의 글자를 쓰시오: ${q1Row}</h3><div style="height:50px; border-bottom:1px solid #eee;"></div>`;
   
-  const grid = document.getElementById('q2-grid');
-  grid.innerHTML = '';
-  const selected = [
-    ...wordData.sang.sort(() => .5 - Math.random()).slice(0, counts.sang),
-    ...wordData.jung.sort(() => .5 - Math.random()).slice(0, counts.jung),
-    ...wordData.ha.sort(() => .5 - Math.random()).slice(0, counts.ha)
+  const q2Div = document.getElementById('q2-result');
+  q2Div.innerHTML = '';
+  const list = [
+    ...wordData.sang.sort(() => .5-Math.random()).slice(0, counts.sang),
+    ...wordData.jung.sort(() => .5-Math.random()).slice(0, counts.jung),
+    ...wordData.ha.sort(() => .5-Math.random()).slice(0, counts.ha)
   ];
-  
-  selected.forEach((w, i) => {
-    grid.innerHTML += `<div style="border:1px solid #ccc; padding:10px; background:white;">${i+1}. ${w.mean} ( )</div>`;
+  list.forEach((w, i) => {
+    q2Div.innerHTML += `<div style="border:1px solid #ccc; padding:15px;">${i+1}. ${w.mean} [ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</div>`;
   });
-  
   showScreen('test-screen');
 }
 
-// 초기 화면 설정
+// 시작 시 첫 화면 로드
 window.onload = () => showScreen('select-screen');
 </script>
 </body>
