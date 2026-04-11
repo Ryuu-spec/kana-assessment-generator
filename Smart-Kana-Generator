@@ -26,51 +26,53 @@
     font-family: 'Noto Sans KR', sans-serif;
     background: var(--bg);
     min-height: 100vh;
-    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-  /* ── [핵심 수정] 화면 전환 및 클릭 방지 해제 ── */
+  /* ── [해결책] 화면 전환을 opacity가 아닌 display로 명확히 분리 ── */
   .screen {
-    position: fixed; /* 화면들이 서로 겹치지 않도록 고정 */
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    display: none; /* 기본 숨김 */
+    display: none; /* 기본은 아예 존재하지 않음 */
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    z-index: 1;
-    padding: 20px;
-  }
-  
-  /* active일 때만 가장 위로 올리고 보여줌 */
-  .screen.active { 
-    display: flex !important; 
-    z-index: 999 !important; 
   }
 
-  .select-card {
-    background: var(--card); border-radius: 20px; padding: 40px;
-    width: 100%; max-width: 500px; text-align: center; box-shadow: var(--shadow);
+  /* active 클래스가 붙은 단 하나의 화면만 물리적으로 나타남 */
+  .screen.active {
+    display: flex !important;
   }
 
-  /* 버튼 클릭 영역 확보 */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+
+  /* 버튼 클릭 영역 최적화 */
   .select-btn {
-    flex: 1; padding: 30px 10px; border-radius: 16px; border: 2px solid var(--border);
-    background: white; cursor: pointer; transition: all 0.2s;
-    position: relative; z-index: 1000; /* 버튼이 카드보다 위에 있도록 */
+    flex: 1; padding: 30px 10px; border-radius: 16px;
+    border: 2px solid var(--border); background: white;
+    cursor: pointer; transition: 0.2s;
   }
-  .select-btn:hover { background: #f4f9ef; border-color: var(--green-dark); }
-  .select-kana { font-size: 2.5rem; font-weight: 700; color: var(--green-text); display: block; pointer-events: none; }
-  .select-label { pointer-events: none; font-weight: 700; }
+  .select-btn:hover { border-color: var(--green-dark); background: #f4f9ef; }
+  
+  /* 버튼 내부 요소가 클릭을 방해하지 않도록 설정 */
+  .select-btn * { pointer-events: none; }
 
   .row-btn {
-    padding: 10px 15px; border-radius: 20px; border: 2px solid #ddd;
-    background: white; cursor: pointer; font-weight: 700;
+    padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd;
+    background: white; cursor: pointer; font-weight: 700; margin: 4px;
   }
   .row-btn.selected { background: var(--green-btn); color: var(--green-text); border-color: var(--green-btn); }
 
-  .btn-primary {
+  .btn-next {
     background: var(--green-btn); color: var(--green-text); border: none;
     border-radius: 10px; padding: 15px; font-size: 1.1rem; font-weight: 700;
     width: 100%; cursor: pointer; margin-top: 20px;
@@ -79,109 +81,75 @@
 </head>
 <body>
 
-<div id="select-screen" class="screen">
-  <div style="margin-bottom:30px; text-align:center;">
-    <h1 style="color:var(--green-dark); font-size:2rem; font-weight:900;">가나 수행평가 생성기</h1>
-  </div>
-  <div class="select-card">
-    <h2 style="margin-bottom:20px;">평가할 문자를 선택하세요</h2>
+<div id="select-screen" class="screen active">
+  <div class="card">
+    <h1 style="color:var(--green-dark); margin-bottom:10px;">가나비</h1>
+    <p style="margin-bottom:30px; color:#666;">평가할 문자를 선택하세요</p>
     <div style="display:flex; gap:15px;">
-      <button class="select-btn" onclick="selectScript('hiragana')">
-        <span class="select-kana">あ</span>
-        <span class="select-label">히라가나</span>
+      <button class="select-btn" onclick="goNext('hiragana')">
+        <b style="font-size:2rem; display:block; color:var(--green-text);">あ</b>
+        히라가나
       </button>
-      <button class="select-btn" onclick="selectScript('katakana')">
-        <span class="select-kana">ア</span>
-        <span class="select-label">가타카나</span>
+      <button class="select-btn" onclick="goNext('katakana')">
+        <b style="font-size:2rem; display:block; color:var(--green-text);">ア</b>
+        가타카나
       </button>
     </div>
   </div>
 </div>
 
 <div id="settings-screen" class="screen">
-  <div class="select-card" style="max-width:600px;">
-    <h3 style="margin-bottom:15px; text-align:left;">1. 출제 행 선택</h3>
-    <div id="q1-row-btns" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-    
-    <div style="margin:25px 0; border-top:1px solid #eee;"></div>
-    
-    <h3 style="margin-bottom:15px; text-align:left;">2. 난이도별 단어 수</h3>
-    <div style="display:flex; gap:10px;">
-      <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px;">
-        상: <button onclick="changeCount('sang',-1)">-</button> <span id="val-sang">1</span> <button onclick="changeCount('sang',1)">+</button>
-      </div>
-      <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px;">
-        중: <button onclick="changeCount('jung',-1)">-</button> <span id="val-jung">2</span> <button onclick="changeCount('jung',1)">+</button>
-      </div>
-      <div style="flex:1; background:#f9f9f9; padding:10px; border-radius:10px;">
-        하: <button onclick="changeCount('ha',-1)">-</button> <span id="val-ha">1</span> <button onclick="changeCount('ha',1)">+</button>
-      </div>
-    </div>
-    <button class="btn-primary" onclick="showScreen('upload-screen')">다음 단계로</button>
+  <div class="card">
+    <h3 style="margin-bottom:20px; text-align:left;">출제 행 선택</h3>
+    <div id="row-container" style="text-align:left;"></div>
+    <button class="btn-next" onclick="showScreen('upload-screen')">다음 단계 (파일 업로드)</button>
   </div>
 </div>
 
 <div id="upload-screen" class="screen">
-  <div class="select-card">
-    <h2>엑셀 파일 업로드</h2>
-    <p style="font-size:0.9rem; color:#666; margin:10px 0;">A열: 단어 / B열: 뜻</p>
-    <div style="border:2px dashed var(--green-light); padding:40px; margin:20px 0; border-radius:15px; cursor:pointer;" onclick="document.getElementById('file-input').click()">
-      이곳을 클릭하여 파일을 선택하세요
+  <div class="card">
+    <h3>엑셀 파일 업로드</h3>
+    <div style="border:2px dashed #ccc; padding:40px; margin:20px 0; border-radius:15px; cursor:pointer;" onclick="document.getElementById('file-input').click()">
+      여기를 클릭하여 파일을 선택하세요
     </div>
     <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none;" onchange="handleFile(this)">
-    <div id="file-status" style="margin-bottom:15px; font-weight:700; color:var(--green-dark);"></div>
-    <button class="btn-primary" id="generate-btn" disabled onclick="generateTest()">문제 생성하기</button>
+    <div id="file-status" style="margin-bottom:10px; font-weight:bold; color:var(--green-dark);"></div>
+    <button class="btn-next" id="gen-btn" disabled onclick="generate()">수행평가 생성</button>
   </div>
 </div>
 
-<div id="test-screen" class="screen" style="background:white; justify-content: flex-start; overflow-y:auto;">
-  <div id="print-area" style="width:100%; max-width:800px; padding:40px;">
-    <h1 id="test-title" style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:30px;">수행평가</h1>
-    <div id="q1-result" style="margin-bottom:30px;"></div>
-    <div id="q2-result" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;"></div>
-    <button class="btn-primary" style="margin-top:50px;" onclick="window.print()">인쇄하기</button>
+<div id="result-screen" class="screen" style="max-width:800px;">
+  <div class="card" id="print-area" style="text-align:left;">
+    <h1 style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px;">일본어 수행평가</h1>
+    <div id="q1-out" style="margin:20px 0;"></div>
+    <div id="q2-out" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;"></div>
+    <button class="btn-next" onclick="window.print()">인쇄하기</button>
   </div>
 </div>
 
 <script>
-const ALL_ROWS = ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'];
-let currentScript = 'hiragana';
-let selectedFrontRows = [];
-let wordData = { sang: [], jung: [], ha: [] };
-const counts = { sang: 1, jung: 2, ha: 1 };
+const ROWS = ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'];
+let selRows = [];
+let wordData = { sang:[], jung:[], ha:[] };
 
-// [핵심] 화면 전환 함수 - z-index와 display를 동시에 제어
-function showScreen(screenId) {
-  console.log("Moving to:", screenId); // 디버깅용
-  const screens = document.querySelectorAll('.screen');
-  screens.forEach(s => {
-    s.classList.remove('active');
-  });
-
-  const target = document.getElementById(screenId);
-  if (target) {
-    target.classList.add('active');
-  }
+function showScreen(id) {
+  // 모든 화면 숨기기
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  // 대상 화면만 보이기
+  const target = document.getElementById(id);
+  if(target) target.classList.add('active');
 }
 
-function selectScript(type) {
-  currentScript = type;
-  const btnGroup = document.getElementById('q1-row-btns');
-  btnGroup.innerHTML = ALL_ROWS.map(r => 
-    `<button class="row-btn" onclick="toggleRow(this, '${r}')">${r}</button>`
-  ).join('');
+function goNext(type) {
+  const container = document.getElementById('row-container');
+  container.innerHTML = ROWS.map(r => `<button class="row-btn" onclick="toggleR(this,'${r}')">${r}</button>`).join('');
   showScreen('settings-screen');
 }
 
-function toggleRow(btn, row) {
+function toggleR(btn, r) {
   btn.classList.toggle('selected');
-  if (btn.classList.contains('selected')) selectedFrontRows.push(row);
-  else selectedFrontRows = selectedFrontRows.filter(r => r !== row);
-}
-
-function changeCount(key, delta) {
-  counts[key] = Math.max(0, Math.min(10, counts[key] + delta));
-  document.getElementById('val-' + key).textContent = counts[key];
+  if(btn.classList.contains('selected')) selRows.push(r);
+  else selRows = selRows.filter(v => v !== r);
 }
 
 function handleFile(input) {
@@ -189,42 +157,35 @@ function handleFile(input) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, {type: 'array'});
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+    const wb = XLSX.read(data, {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
     
-    wordData = { sang: [], jung: [], ha: [] };
+    wordData = { sang:[], jung:[], ha:[] };
     rows.forEach(row => {
-      if (row[0] && row[1]) {
-        // 난이도 자동 분석 (간이 버전)
-        let level = row[0].length <= 2 ? 'ha' : (row[0].length <= 4 ? 'jung' : 'sang');
-        wordData[level].push({ word: row[0], mean: row[1] });
+      if(row[0] && row[1]) {
+        let lv = row[0].length <= 2 ? 'ha' : (row[0].length <= 4 ? 'jung' : 'sang');
+        wordData[lv].push({w:row[0], m:row[1]});
       }
     });
-    document.getElementById('file-status').textContent = "분류 완료!";
-    document.getElementById('generate-btn').disabled = false;
+    document.getElementById('file-status').textContent = "파일 준비 완료!";
+    document.getElementById('gen-btn').disabled = false;
   };
   reader.readAsArrayBuffer(file);
 }
 
-function generateTest() {
-  const q1Row = selectedFrontRows[0] || "아행";
-  document.getElementById('q1-result').innerHTML = `<h3>1. 다음 행의 글자를 쓰시오: ${q1Row}</h3><div style="height:50px; border-bottom:1px solid #eee;"></div>`;
+function generate() {
+  const q1 = selRows[0] || "아행";
+  document.getElementById('q1-out').innerHTML = `<h3>1. 다음 행의 글자를 쓰시오: <b>${q1}</b></h3>`;
   
-  const q2Div = document.getElementById('q2-result');
-  q2Div.innerHTML = '';
-  const list = [
-    ...wordData.sang.sort(() => .5-Math.random()).slice(0, counts.sang),
-    ...wordData.jung.sort(() => .5-Math.random()).slice(0, counts.jung),
-    ...wordData.ha.sort(() => .5-Math.random()).slice(0, counts.ha)
-  ];
-  list.forEach((w, i) => {
-    q2Div.innerHTML += `<div style="border:1px solid #ccc; padding:15px;">${i+1}. ${w.mean} [ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</div>`;
+  const q2 = document.getElementById('q2-out');
+  q2.innerHTML = '';
+  const all = [...wordData.sang, ...wordData.jung, ...wordData.ha].sort(()=>.5-Math.random()).slice(0,4);
+  
+  all.forEach((w, i) => {
+    q2.innerHTML += `<div style="border:1px solid #ddd; padding:10px;">${i+1}. ${w.m} ( &nbsp;&nbsp;&nbsp;&nbsp; )</div>`;
   });
-  showScreen('test-screen');
+  showScreen('result-screen');
 }
-
-// 시작 시 첫 화면 로드
-window.onload = () => showScreen('select-screen');
 </script>
 </body>
 </html>
