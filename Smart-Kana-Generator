@@ -3,163 +3,1008 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>가나비 AI - 지능형 에듀테크 툴</title>
+<title>가나비 — 히라가나·가타카나 수행평가</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-  :root { --main-bg: #f5f2e8; --card-bg: #ffffff; --green-btn: #c8ddb0; --green-text: #4a7a32; }
-  
-  body { font-family: 'Noto Sans KR', sans-serif; background: var(--main-bg); margin: 0; padding: 0; }
-  .screen { display: none; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; }
-  .screen.active { display: flex; }
-  
-  .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 800px; text-align: center; }
-  .btn { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 15px 30px; font-weight: 700; cursor: pointer; font-size: 1.1rem; margin: 10px; }
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
 
-  /* 1단계: 히라가나 가타카나 큰 선택지 */
-  .main-selection { display: flex; gap: 20px; justify-content: center; margin: 30px 0; }
-  .type-box { 
-    flex: 1; padding: 40px 20px; border: 4px solid var(--green-btn); border-radius: 20px; 
-    font-size: 2rem; font-weight: 900; cursor: pointer; background: white; transition: 0.3s;
+  :root {
+    --bg: #f5f2e8;
+    --card: #ffffff;
+    --green-light: #c8ddb0;
+    --green-dark: #5a8a3c;
+    --green-btn: #c8ddb0;
+    --green-text: #4a7a32;
+    --text: #2d2d2d;
+    --text-light: #666;
+    --border: #d0c9b0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
-  .type-box.active { background: var(--green-text); color: white; border-color: var(--green-text); }
 
-  /* 2단계: 행 선택 그리드 */
-  .row-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
-  .row-btn { padding: 15px; border: 1px solid #ddd; border-radius: 10px; cursor: pointer; background: white; font-weight: bold; }
-  .row-btn.active { background: var(--green-text); color: white; border-color: var(--green-text); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* 3단계: 대시보드 결과 */
-  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
-  .dash-card { padding: 25px; border-radius: 20px; background: #f9fdf5; border: 2px solid var(--green-btn); text-align: left; }
-  .dash-title { font-size: 1.2rem; font-weight: 900; color: var(--green-text); border-bottom: 2px solid var(--green-btn); margin-bottom: 15px; padding-bottom: 5px; }
-  .word-box { font-size: 2.2rem; font-weight: 900; background: white; margin-bottom: 15px; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--text);
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .screen.active { display: flex; }
+
+  .logo-area { margin-bottom: 28px; text-align: center; }
+  .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 6px;
+  }
+  .logo-tagline {
+    font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+    font-weight: 900;
+    color: var(--green-dark);
+    letter-spacing: -0.5px;
+  }
+  .logo-area p { color: var(--text-light); font-size: 0.9rem; margin-top: 4px; }
+
+  /* ── 설정 카드 ── */
+  .settings-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: clamp(24px, 5vw, 40px) clamp(20px, 6vw, 48px);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 580px;
+  }
+
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .section-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  /* 라디오 */
+  .radio-group { display: flex; flex-direction: column; gap: 7px; }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 2px solid #eee;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .radio-option:hover { border-color: var(--green-light); background: #f6fbf0; }
+  .radio-option.selected { border-color: var(--green-dark); background: #eef7e4; }
+
+  .radio-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .radio-option.selected .radio-dot { border-color: var(--green-dark); background: var(--green-dark); }
+  .radio-dot::after {
+    content: ''; width: 7px; height: 7px;
+    border-radius: 50%; background: white; display: none;
+  }
+  .radio-option.selected .radio-dot::after { display: block; }
+
+  .radio-text { font-size: 0.88rem; font-weight: 500; color: var(--text); line-height: 1.5; }
+
+  .badge-preview { display: inline-flex; gap: 3px; margin-left: 5px; flex-wrap: wrap; vertical-align: middle; }
+  .badge-mini {
+    background: var(--green-light); color: var(--green-dark);
+    border-radius: 20px; padding: 1px 7px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .badge-mini.fixed { background: #ffd6d6; color: #c0392b; }
+
+  /* 스테퍼 */
+  .stepper-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .stepper-item {
+    flex: 1; min-width: 100px;
+    background: #f8f7f2;
+    border-radius: 12px;
+    padding: 12px 10px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .stepper-label {
+    font-size: 0.8rem; font-weight: 700;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .diff-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .diff-dot.sang { background: #e74c3c; }
+  .diff-dot.jung { background: #f39c12; }
+  .diff-dot.ha   { background: #27ae60; }
+
+  .stepper-controls { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .stepper-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 2px solid var(--green-light); background: white;
+    color: var(--green-dark); font-size: 1.1rem; font-weight: 900;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s; line-height: 1;
+  }
+  .stepper-btn:hover { background: var(--green-light); }
+  .stepper-btn:active { transform: scale(0.93); }
+  .stepper-val { font-size: 1.3rem; font-weight: 900; color: var(--text); min-width: 22px; text-align: center; }
+
+  .total-badge { text-align: center; margin-top: 10px; font-size: 0.82rem; color: var(--text-light); }
+  .total-badge span { font-weight: 700; color: var(--green-dark); }
+
+  .divider { border: none; border-top: 1px solid #eee; margin: 22px 0; }
+
+  .btn-primary {
+    background: var(--green-btn); color: var(--green-text); border: none;
+    border-radius: 10px; padding: 13px 32px;
+    font-size: 1rem; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: background 0.2s, transform 0.1s; width: 100%;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: #b0cc98; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { background: #bbb; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: white; color: var(--green-text);
+    border: 2px solid var(--green-btn); border-radius: 10px;
+    padding: 11px 32px; font-size: 1rem; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif; cursor: pointer;
+    transition: all 0.2s; width: 100%; margin-top: 10px;
+  }
+  .btn-secondary:hover { background: #f0fae8; }
+
+  /* ── 업로드 카드 ── */
+  .upload-card {
+    background: var(--card); border-radius: 20px;
+    padding: clamp(24px, 5vw, 40px) clamp(20px, 6vw, 48px);
+    box-shadow: var(--shadow); width: 100%; max-width: 520px; text-align: center;
+  }
+  .upload-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 24px; }
+
+  .excel-format {
+    background: #f8f7f2; border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 28px;
+    text-align: left; border: 1px solid var(--border);
+  }
+  .excel-format p { font-size: 0.82rem; color: var(--text-light); margin-bottom: 10px; font-weight: 500; }
+  .excel-cols { display: flex; gap: 8px; }
+  .col-badge { flex: 1; padding: 8px 12px; border-radius: 8px; text-align: center; font-size: 0.85rem; font-weight: 700; }
+  .col-badge.sang { background: #ffd6d6; color: #c0392b; }
+  .col-badge.jung { background: #fff0c0; color: #b8860b; }
+  .col-badge.ha   { background: #d6efd6; color: #2e7d32; }
+  .col-badge small { display: block; font-weight: 400; font-size: 0.75rem; margin-top: 2px; }
+
+  .drop-zone {
+    border: 2px dashed var(--green-light); border-radius: 14px;
+    padding: 36px 20px; cursor: pointer; transition: all 0.2s;
+    margin-bottom: 16px; background: #f9fdf5;
+  }
+  .drop-zone:hover, .drop-zone.dragover { background: #eef8e4; border-color: var(--green-dark); }
+  .drop-zone .icon { font-size: 2.4rem; margin-bottom: 10px; }
+  .drop-zone p { color: var(--text-light); font-size: 0.9rem; }
+  .drop-zone strong { color: var(--green-dark); }
+  #file-input { display: none; }
+
+  .file-status { margin-top: 12px; margin-bottom: 4px; font-size: 0.85rem; color: var(--green-dark); font-weight: 500; min-height: 20px; }
+
+  /* ── 테스트 화면 ── */
+  #test-screen {
+    display: none;
+    padding: 2vh 8vw 10vh;
+    width: 100%; height: 100vh;
+    box-sizing: border-box;
+    flex-direction: column;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .test-header { text-align: center; margin-bottom: 1.5vh; }
+  .test-header h1 {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 900; color: var(--text); letter-spacing: -1px;
+  }
+
+  .question-block {
+    background: var(--card); border-radius: 16px;
+    padding: 1.5vh 3vw;
+    margin-bottom: 1.2vh; box-shadow: var(--shadow);
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+  }
+  .question-block.q1-block { flex: 0.9; }
+
+  .q-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: clamp(8px, 1.5vw, 14px); }
+
+  .q-label {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: clamp(34px, 4vw, 48px); height: clamp(34px, 4vw, 48px);
+    min-width: clamp(34px, 4vw, 48px);
+    background: #ffffff; border-radius: 8px;
+    border: 2px solid var(--green-btn);
+    font-weight: 900; font-size: clamp(1rem, 2vw, 1.35rem);
+    color: var(--green-text); flex-shrink: 0;
+  }
+
+  .q-instruction {
+    font-size: clamp(0.95rem, 2vw, 1.5rem); font-weight: 700; color: var(--text);
+    line-height: 1.5; display: inline; white-space: normal;
+  }
+
+  .row-badge-inline {
+    background: var(--green-btn); color: var(--green-text);
+    border-radius: 36px;
+    min-width: clamp(72px, 10vw, 120px);
+    height: clamp(46px, 7vw, 72px);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: clamp(1rem, 2.5vw, 1.8rem);
+    white-space: nowrap; flex-shrink: 0; overflow: hidden;
+    padding: 0 clamp(12px, 2vw, 22px);
+    text-align: center; word-break: keep-all; line-height: 1.2;
+  }
+  .row-badge-inline.long {
+    font-size: clamp(0.9rem, 1.8vw, 1.3rem); white-space: normal; line-height: 1.2; word-break: keep-all; padding: 0 clamp(10px, 1.5vw, 18px);
+  }
+
+  .word-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1.2vw; margin-top: 1vh; flex: 1;
+  }
+  .word-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .word-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .word-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+  .word-card-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+
+  .word-num {
+    font-size: clamp(1rem, 1.8vw, 1.3rem); color: var(--green-text);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; flex-shrink: 0;
+  }
+
+  .word-card {
+    border: 2px solid #b0cc98; border-radius: 14px;
+    background: var(--green-btn); display: flex;
+    align-items: center; justify-content: center;
+    width: 100%; padding: 1.5vh 1vw;
+    flex: 1; min-height: 6vh; max-height: 16vh;
+  }
+  .word-korean {
+    font-size: clamp(1.1rem, 2.8vw, 2rem); font-weight: 700;
+    color: var(--green-text); line-height: 1.2; text-align: center;
+  }
+
+  .blank-badge {
+    color: transparent !important;
+  }
+  .blank-card {
+  }
+
+  .btn-click-here {
+    background: var(--green-btn); color: var(--green-text); border: none;
+    border-radius: 10px; padding: 1.2vh 6vw;
+    font-size: clamp(0.9rem, 1.8vw, 1.1rem); font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif; cursor: pointer;
+    transition: background 0.2s, transform 0.1s; letter-spacing: 0.5px;
+    position: fixed; bottom: 2.5vh; left: 50%; transform: translateX(-50%);
+    z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  .btn-click-here:hover { background: #b0cc98; color: var(--green-text); }
+  .btn-click-here:active { transform: translateX(-50%) scale(0.97); }
+
+  /* ── 행 선택 버튼 ── */
+  .row-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+  .row-btn {
+    padding: 9px 18px; border-radius: 20px;
+    border: 2px solid #d8d8d8;
+    background: white; color: var(--text-light);
+    font-size: 0.88rem; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .row-btn:hover { border-color: var(--green-btn); background: #f4f9ef; color: var(--green-text); }
+  .row-btn.selected { border-color: var(--green-btn); background: var(--green-btn); color: var(--green-text); }
+
+  @media (max-width: 600px) {
+    .word-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .stepper-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .stepper-item { min-width: unset; }
+  }
+
+  /* ── 로그인 화면 (삭제됨, CSS는 더미로 남김) ── */
+  #login-screen { display: none; } /* 이메일 인증 삭제로 인해 항상 숨김 */
+  .login-card { /* 스타일은 유지 */ }
+  .login-title { /* 스타일은 유지 */ }
+  .login-badge { /* 스타일은 유지 */ }
+  .login-badge.pending { background: #f2f2f2; color: #888; }
+  .login-badge.ready  { background: #e8f5e0; color: #4a8a3a; }
+  .login-badge.error  { background: #fff3e0; color: #e07a00; }
+  .login-badge.checking { background: #e8f0fe; color: #3a6ae0; }
+  .login-guide { /* 스타일은 유지 */ }
+  .login-input { /* 스타일은 유지 */ }
+  .login-input::placeholder { /* 스타일은 유지 */ }
+  .login-input:focus { /* 스타일은 유지 */ }
+  .login-btn { /* 스타일은 유지 */ }
+  .login-btn:hover { /* 스타일은 유지 */ }
+  .login-btn:disabled { /* 스타일은 유지 */ }
+  .login-result { /* 스타일은 유지 */ }
+  .login-result.error { /* 스타일은 유지 */ }
+  .login-result.success { /* 스타일은 유지 */ }
+  .login-footer { /* 스타일은 유지 */ }
+  .login-footer a { /* 스타일은 유지 */ }
+  .login-spinner { /* 스타일은 유지 */ }
+
+  /* ── 문자 선택 화면 ── */
+  #select-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  #select-screen.active {
+    display: flex !important;
+  }
+  .select-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 48px 48px 44px;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .select-card h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .select-card p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 36px;
+  }
+  .select-btn-group {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .select-btn {
+    flex: 1;
+    padding: 28px 16px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    background: white;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .select-btn:hover {
+    border-color: var(--green-btn);
+    background: #f4f9ef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .select-btn .select-kana {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--green-text);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .select-btn .select-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .select-btn .select-sub {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    display: block;
+  }
 </style>
 </head>
 <body>
 
-<div id="step1" class="screen active">
-  <div class="card">
-    <h1 style="color:var(--green-text)">가나비 AI 에듀테크 설정</h1>
-    
-    <p style="font-size: 1.2rem; font-weight: bold;">[필수선택] 학습할 가나를 선택하세요</p>
-    <div class="main-selection">
-      <div id="sel-hira" class="type-box active" onclick="setType('히라가나')">히라가나</div>
-      <div id="sel-kata" class="type-box" onclick="setType('가타카나')">가타카나</div>
+<div id="select-screen" class="screen active"> 
+  <div class="logo-area">
+    <div class="logo-mark">
+      <span class="logo-tagline">가나 수행평가 생성기</span>
     </div>
-
-    <p style="font-size: 1.2rem; font-weight: bold;">[범위선택] 출제 범위를 선택하세요</p>
-    <div id="row-btns" class="row-grid"></div>
-
-    <p style="font-size: 1.2rem; font-weight: bold;">[문항설정] 난이도별 단어 개수</p>
-    <div style="margin: 10px 0;">
-      상: <input type="number" id="in-sang" value="1" style="width:50px; padding:5px;"> 
-      중: <input type="number" id="in-jung" value="2" style="width:50px; padding:5px;"> 
-      하: <input type="number" id="in-ha" value="1" style="width:50px; padding:5px;">
-    </div>
-    <button class="btn" onclick="goStep(2)">다음: 데이터 업로드</button>
+    <p>문자 종류를 선택하세요</p>
   </div>
-</div>
-
-<div id="step2" class="screen">
-  <div class="card">
-    <h2 style="color:var(--green-text)">엑셀 데이터 업로드</h2>
-    <p>분류하신 상/중/하 엑셀 파일을 선택해주세요.</p>
-    <input type="file" id="file-upload" accept=".xlsx, .xls" style="margin: 30px 0; font-size: 1rem;">
-    <div id="upload-status" style="display:none;">
-      <p style="color:var(--green-text); font-weight:bold;">✅ 데이터 로드 완료!</p>
-      <button class="btn" onclick="goStep(3)">에듀테크 대시보드 실행</button>
+  <div class="select-card">
+    <h2>어떤 문자로 평가할까요?</h2>
+    <p>선택한 문자에 맞는 설정 화면으로 이동합니다</p>
+    <div class="select-btn-group">
+      <button class="select-btn" onclick="selectScript('hiragana')">
+        <span class="select-kana">あ</span>
+        <span class="select-label">히라가나</span>
+        <span class="select-sub">あいうえお</span>
+      </button>
+      <button class="select-btn" onclick="selectScript('katakana')">
+        <span class="select-kana">ア</span>
+        <span class="select-label">가타카나</span>
+        <span class="select-sub">아이우에오</span>
+      </button>
     </div>
   </div>
 </div>
 
-<div id="step3" class="screen">
-  <div class="card" style="max-width: 900px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid var(--green-text); padding-bottom: 10px;">
-      <h2 id="res-type" style="color:var(--green-text); margin:0;">대시보드</h2>
-      <button class="btn" style="background:var(--green-text); color:white; margin:0;" onclick="drawWords()">🎲 랜덤 재생성 (반별 교체)</button>
+<div id="settings-screen" class="screen">
+  <div class="logo-area">
+    <div class="logo-mark">
+      <span class="logo-tagline" id="settings-logo-tagline">히라가나 수행평가</span>
     </div>
-    <p id="res-range" style="text-align:left; color:#666; margin-top:10px;"></p>
+    <p>문항 설정 후 파일을 업로드하세요</p>
+  </div>
 
-    <div class="dashboard-grid">
-      <div class="dash-card"><div class="dash-title">상 (High)</div><div id="area-sang"></div></div>
-      <div class="dash-card"><div class="dash-title">중 (Mid)</div><div id="area-jung"></div></div>
-      <div class="dash-card"><div class="dash-title">하 (Low)</div><div id="area-ha"></div></div>
+  <div class="settings-card">
+
+    <div class="section-title">1번 문제 — 첫 번째 행 선택</div>
+    <div class="section-label" style="margin-bottom:10px;">출제할 행을 선택하세요</div>
+
+    <div class="section-label" style="font-size:0.82rem; font-weight:400; color:var(--text-light); margin-bottom:8px;">
+      선택한 행 중 랜덤 1개 출제
     </div>
-    <button class="btn" onclick="location.reload()" style="margin-top:30px; font-size:0.8rem; background:#eee; color:#333;">초기 설정으로</button>
+    <div class="row-btn-group" id="q1-row-btns">
+      <button class="row-btn" onclick="selectFrontRow(this,'아행')">아행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'카행')">카행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'사행')">사행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'타행')">타행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'나행')">나행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'하행')">하행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'마행')">마행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'라행')">라행</button>
+      <button class="row-btn" onclick="selectFrontRow(this,'야행+와행')">야행+와행</button>
+    </div>
+
+    <div id="q1-warning" style="display:none; margin-top:8px; font-size:0.78rem; color:#e74c3c;">
+      ⚠️ 최소 1개 이상 선택해주세요.
+    </div>
+
+    <div style="margin-top:12px; padding:10px 14px; background:#f8f7f2; border-radius:10px; font-size:0.8rem; color:var(--text-light); border:1px solid var(--border); min-height:38px;">
+      <strong style="color:var(--green-text);">두 번째 행</strong> &nbsp;→&nbsp; <span id="second-row-preview">나머지 행 중 자동 랜덤</span>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-title">2번 문제 — 난이도별 단어 수</div>
+    <div class="stepper-group">
+      <div class="stepper-item">
+        <div class="stepper-label"><span class="diff-dot sang"></span> 상 난이도</div>
+        <div class="stepper-controls">
+          <button class="stepper-btn" onclick="changeCount('sang',-1)">−</button>
+          <div class="stepper-val" id="val-sang">1</div>
+          <button class="stepper-btn" onclick="changeCount('sang',1)">+</button>
+        </div>
+      </div>
+      <div class="stepper-item">
+        <div class="stepper-label"><span class="diff-dot jung"></span> 중 난이도</div>
+        <div class="stepper-controls">
+          <button class="stepper-btn" onclick="changeCount('jung',-1)">−</button>
+          <div class="stepper-val" id="val-jung">2</div>
+          <button class="stepper-btn" onclick="changeCount('jung',1)">+</button>
+        </div>
+      </div>
+      <div class="stepper-item">
+        <div class="stepper-label"><span class="diff-dot ha"></span> 하 난이도</div>
+        <div class="stepper-controls">
+          <button class="stepper-btn" onclick="changeCount('ha',-1)">−</button>
+          <div class="stepper-val" id="val-ha">1</div>
+          <button class="stepper-btn" onclick="changeCount('ha',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="total-badge" id="total-badge">총 단어 수: <span>4</span>개</div>
+
+    <hr class="divider">
+
+    <button class="btn-primary" onclick="goToUpload()">다음 → 파일 업로드</button>
+  </div>
+</div>
+
+<div id="upload-screen" class="screen">
+  <div class="logo-area">
+    <div class="logo-mark">
+      <span class="logo-tagline" id="upload-logo-tagline">히라가나 수행평가</span>
+    </div>
+    <p>단어를 업로드하면 문제가 자동 생성됩니다</p>
+  </div>
+
+  <div class="upload-card">
+    <h2>📋 엑셀 파일 업로드</h2>
+
+    <div id="saved-banner" style="display:none;
+      background:#eef7e4; border:1.5px solid var(--green-light);
+      border-radius:12px; padding:12px 16px; margin-bottom:16px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div style="font-size:0.85rem; color:var(--green-dark);">
+        💾 <strong id="saved-file-name"></strong> 저장됨
+        <span style="color:var(--text-light); font-weight:400;"> — 상 <span id="saved-sang"></span>개 / 중 <span id="saved-jung"></span>개 / 하 <span id="saved-ha"></span>개</span>
+      </div>
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button onclick="loadSavedData()"
+          style="background:var(--green-btn); color:var(--green-text); border:none;
+                 border-radius:8px; padding:7px 14px; font-size:0.82rem; font-weight:700;
+                 font-family:'Noto Sans KR',sans-serif; cursor:pointer;">불러오기</button>
+        <button onclick="clearSavedData()"
+          style="background:none; border:1.5px solid #ddd; border-radius:8px;
+                 padding:7px 10px; font-size:0.82rem; color:var(--text-light);
+                 font-family:'Noto Sans KR',sans-serif; cursor:pointer;">삭제</button>
+      </div>
+    </div>
+
+    <div class="excel-format">
+      <p>엑셀 파일 형식 (A열: 상 / B열: 중 / C열: 하)</p>
+      <div class="excel-cols">
+        <div class="col-badge sang">A열<br><small>상 난이도</small></div>
+        <div class="col-badge jung">B열<br><small>중 난이도</small></div>
+        <div class="col-badge ha">C열<br><small>하 난이도</small></div>
+      </div>
+    </div>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📂</div>
+      <p><strong>클릭</strong>하거나 파일을 여기에 끌어다 놓으세요</p>
+      <p style="font-size:0.78rem; margin-top:6px; color:#aaa;">.xlsx / .xls 파일</p>
+    </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls">
+
+    <div id="file-replace-row" style="display:none; text-align:right; margin-top:6px;">
+      <button onclick="document.getElementById('file-input').click()"
+        style="background:none; border:none; color:var(--green-text); font-size:0.82rem;
+               font-weight:600; cursor:pointer; font-family:'Noto Sans KR',sans-serif;
+               text-decoration:underline; padding:0;">
+        📎 파일 변경
+      </button>
+    </div>
+
+    <div class="file-status" id="file-status"></div>
+
+    <button class="btn-primary" id="generate-btn" onclick="generateTest()">
+      문제 생성하기
+    </button>
+    <button class="btn-secondary" onclick="goToSettings()">← 설정으로 돌아가기</button>
+  </div>
+</div>
+
+<div id="test-screen">
+  <div class="test-header">
+    <h1 id="test-title">히라가나 쓰기</h1>
+  </div>
+
+  <div class="question-block q1-block">
+    <div class="q-title-row">
+      <span class="q-label">1</span>
+      <span class="q-instruction" id="q1-instruction">히라가나 <span id="q1-badges-inline"></span> 에 해당하는 10자를 쓰시오.</span>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <div class="q-title-row">
+      <span class="q-label">2</span>
+      <span class="q-instruction" id="q2-instruction">다음 단어에 해당하는 일본어를 히라가나로 쓰시오.</span>
+    </div>
+    <div class="word-grid" id="q2-word-grid"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-click-here" onclick="revealTest()">Click Here</button>
   </div>
 </div>
 
 <script>
-let kanaType = '히라가나';
-let selectedRows = [];
-let rawData = { sang: [], jung: [], ha: [] };
 
-// 1. 가나 타입 선택
-function setType(val) {
-  kanaType = val;
-  document.getElementById('sel-hira').classList.toggle('active', val === '히라가나');
-  document.getElementById('sel-kata').classList.toggle('active', val === '가타카나');
+// ── [추가] 난이도 데이터베이스 ──
+const INTERNAL_DB = {
+  hiragana: {
+    sang: ['きゅうり', 'しゅくだい', 'きょうしつ', 'じゅうどう', 'ちょうちょ', 'しょうゆ', 'りゅうがく', 'ちゅうしゃじょう', 'びょうき', 'きょねん', 'いっしょ', 'ちょっと', 'きっぷ', 'ざっし', 'がっこう'],
+    jung: ['せんせい', 'かばん', 'じてんしゃ', 'でんわ', 'とけい', 'くだもの', 'べんきょう', 'なまえ', 'あした', 'きのう', 'こうえん', 'えんぴつ', 'めがね', 'けしごむ', 'ぼうし'],
+    ha: ['いぬ', 'ね코', 'かさ', 'とり', 'はな', 'やま', 'すし', 'さくら', 'あめ', 'うみ', 'つき', 'そら', 'ゆき', 'とり', 'ひと']
+  },
+  katakana: {
+    sang: ['チョコレート', 'コンピューター', 'スマートフォン', 'アイスクリーム', 'タクシー', 'プレゼント', 'レストラン', 'デパート', 'ニュース', 'ジュース'],
+    jung: ['カメラ', 'テレビ', 'ノート', 'ペン', 'トイレ', 'バス', 'ビル', 'ドア', 'コップ', 'パン'],
+    ha: ['アメリカ', 'フランス', 'ドイツ', 'イタリア', 'アジア', 'ピアノ', 'ギター', 'ラジオ', 'シャツ', 'クラス']
+  }
+};
+
+// ── 문자 종류 ──
+let currentScript = 'hiragana'; // 'hiragana' or 'katakana'
+
+const ROWS_MAP = {
+  hiragana: ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'],
+  katakana: ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행']
+};
+
+function selectScript(type) {
+  currentScript = type;
+  // 행 버튼 업데이트
+  const rows = ROWS_MAP[type];
+  const btnGroup = document.getElementById('q1-row-btns');
+  btnGroup.innerHTML = rows.map(r =>
+    `<button class="row-btn" onclick="selectFrontRow(this,'${r}')">${r}</button>`
+  ).join('');
+  selectedFrontRows = [];
+  updateSecondRowPreview();
+
+  // 제목 업데이트
+  const titleText = type === 'hiragana' ? '히라가나 쓰기' : '가타카나 쓰기';
+  const scriptLabel = type === 'hiragana' ? '히라가나' : '가타카나';
+  document.querySelector('.test-header h1') && (document.querySelector('.test-header h1').textContent = titleText);
+  document.getElementById('test-title') && (document.getElementById('test-title').textContent = titleText);
+  // 화면별 타이틀 업데이트
+  ['settings-logo-tagline','upload-logo-tagline'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = type === 'hiragana' ? '히라가나 수행평가' : '가타카나 수행평가';
+  });
+  // q1 지시문 앞부분 업데이트 (badges span은 유지)
+  const q1inst = document.getElementById('q1-instruction');
+  // textContent를 직접 설정하면 내부 span이 사라지므로, textNode를 변경
+  if (q1inst && q1inst.childNodes.length > 0) {
+      q1inst.childNodes[0].nodeValue = scriptLabel + ' ';
+  }
+  document.getElementById('q2-instruction').textContent = `다음 단어에 해당하는 일본어를 ${scriptLabel}로 쓰시오.`;
+  // (브랜드 이름은 항상 가나비로 고정)
+
+  showScreen('settings-screen');
 }
 
-// 2. 행 버튼 생성 (아~와)
-const rows = ['아','카','사','타','나','하','마','라','야','와'];
-const rowContainer = document.getElementById('row-btns');
-rows.forEach(r => {
-  const b = document.createElement('div');
-  b.className = 'row-btn';
-  b.innerText = r + '행';
-  b.onclick = function() {
-    this.classList.toggle('active');
-    const i = selectedRows.indexOf(r);
-    if(i > -1) selectedRows.splice(i, 1);
-    else selectedRows.push(r);
-  };
-  rowContainer.appendChild(b);
-});
+// ── 로그인 관련 코드 삭제 ──
+// const GAS_URL = '...'; (삭제)
+// document.getElementById('loginEmail').addEventListener('keydown', ...); (삭제)
+// async function handleLogin() { ... } (삭제)
+// function showLoginResult(msg) { ... } (삭제)
 
-function goStep(n) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('step' + n).classList.add('active');
-  if(n === 3) {
-    document.getElementById('res-type').innerText = kanaType + " 지능형 대시보드";
-    document.getElementById('res-range').innerText = "출제 범위: " + (selectedRows.join(', ') || "전체");
-    drawWords();
+// 전체 행 목록
+const ALL_ROWS = ['아행','카행','사행','타행','나행','하행','마행','라행','야행+와행'];
+
+// 첫 번째 행으로 선택된 행들
+let selectedFrontRows = [];  // 기본 미선택
+
+function selectFrontRow(btn, rowName) {
+  const isSelected = btn.classList.contains('selected');
+
+  if (isSelected) {
+    // 마지막 1개는 해제 불가
+    if (selectedFrontRows.length === 1) {
+      document.getElementById('q1-warning').style.display = 'block';
+      setTimeout(() => document.getElementById('q1-warning').style.display = 'none', 2000);
+      return;
+    }
+    btn.classList.remove('selected');
+    selectedFrontRows = selectedFrontRows.filter(r => r !== rowName);
+  } else {
+    btn.classList.add('selected');
+    selectedFrontRows.push(rowName);
+  }
+  updateSecondRowPreview();
+}
+
+function updateSecondRowPreview() {
+  const currentRows = ROWS_MAP[currentScript] || ALL_ROWS;
+  const secondPool = currentRows.filter(r => !selectedFrontRows.includes(r));
+  const el = document.getElementById('second-row-preview');
+  if (secondPool.length === 0) {
+    el.textContent = '(없음 - 모든 행이 첫 번째로 선택됨)';
+  } else {
+    el.textContent = secondPool.join(' · ') + ' 중 자동 랜덤';
   }
 }
+const counts = { sang: 1, jung: 2, ha: 1 };
+let wordData = { sang: [], jung: [], ha: [] }; // 업로드된 데이터를 저장하는 변수
 
-// 3. 파일 업로드 핸들링
-document.getElementById('file-upload').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const data = new Uint8Array(evt.target.result);
-    const workbook = XLSX.read(data, {type: 'array'});
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
+// ── 스테퍼 ──
+function changeCount(key, delta) {
+  const total = counts.sang + counts.jung + counts.ha;
+  // 총합이 1인 상태에서 마이너스 시도 시 차단
+  if (delta < 0 && total <= 1) return;
+  counts[key] = Math.max(0, Math.min(6, counts[key] + delta));
+  document.getElementById('val-' + key).textContent = counts[key];
+  const newTotal = counts.sang + counts.jung + counts.ha;
+  document.getElementById('total-badge').innerHTML = `총 단어 수: <span>${newTotal}</span>개`;
+  // 총합이 1이면 모든 − 버튼 비활성화
+  document.querySelectorAll('.stepper-btn').forEach(btn => {
+    if (btn.textContent === '−') {
+      btn.disabled = newTotal <= 1;
+      btn.style.opacity = newTotal <= 1 ? '0.35' : '';
+      btn.style.cursor  = newTotal <= 1 ? 'not-allowed' : '';
+    }
+  });
+}
 
-    rawData = { sang: [], jung: [], ha: [] };
-    json.slice(1).forEach(row => {
-      if(row[0]) rawData.sang.push(row[0]);
-      if(row[1]) rawData.jung.push(row[1]);
-      if(row[2]) rawData.ha.push(row[2]);
-    });
-    document.getElementById('upload-status').style.display = 'block';
-  };
-  reader.readAsArrayBuffer(file);
+// ── localStorage 저장 단어 관리 ──
+function initSavedBanner() {
+  try {
+    const saved = localStorage.getItem('gana_wordData');
+    const savedName = localStorage.getItem('gana_fileName');
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const banner = document.getElementById('saved-banner');
+    banner.style.display = 'flex';
+    document.getElementById('saved-file-name').textContent = savedName || '이전 파일';
+    document.getElementById('saved-sang').textContent = data.sang?.length || 0;
+    document.getElementById('saved-jung').textContent = data.jung?.length || 0;
+    document.getElementById('saved-ha').textContent  = data.ha?.length  || 0;
+  } catch(e) {}
+}
+
+function loadSavedData() {
+  try {
+    const saved = localStorage.getItem('gana_wordData');
+    const savedName = localStorage.getItem('gana_fileName');
+    if (!saved) return;
+    wordData = JSON.parse(saved);
+    const ok = wordData.sang.length >= counts.sang
+            && wordData.jung.length >= counts.jung
+            && wordData.ha.length  >= counts.ha;
+    const status = document.getElementById('file-status');
+    const replaceRow = document.getElementById('file-replace-row');
+    if (!ok) {
+      status.style.color = '#e74c3c';
+      status.textContent = `⚠️ 저장 데이터: 상 ${wordData.sang.length}개, 중 ${wordData.jung.length}개, 하 ${wordData.ha.length}개 (설정: 상 ${counts.sang}/중 ${counts.jung}/하 ${counts.ha}개 필요)`;
+      document.getElementById('generate-btn').disabled = true;
+    } else {
+      status.style.color = 'var(--green-dark)';
+      status.textContent = `✅ ${savedName || '저장된 파일'} — 상 ${wordData.sang.length}개, 중 ${wordData.jung.length}개, 하 ${wordData.ha.length}개`;
+      document.getElementById('generate-btn').disabled = false;
+      const dz = document.getElementById('drop-zone');
+      dz.style.padding = '14px 20px';
+      dz.querySelector('.icon').style.display = 'none';
+      dz.querySelector('p').textContent = '저장된 파일을 불러왔습니다';
+      replaceRow.style.display = 'block';
+    }
+    document.getElementById('saved-banner').style.display = 'none';
+  } catch(e) {}
+}
+
+function clearSavedData() {
+  localStorage.removeItem('gana_wordData');
+  localStorage.removeItem('gana_fileName');
+  document.getElementById('saved-banner').style.display = 'none';
+  // 데이터 삭제 후 wordData를 초기화하고, generate-btn을 다시 활성화 (내부 DB 사용 가능하도록)
+  wordData = { sang: [], jung: [], ha: [] };
+  document.getElementById('generate-btn').disabled = false;
+  // 드롭존도 초기 상태로 복구
+  const dz = document.getElementById('drop-zone');
+  dz.style.padding = '';
+  const icon = dz.querySelector('.icon');
+  if (icon) icon.style.display = '';
+  const ps = dz.querySelectorAll('p');
+  if (ps[0]) ps[0].innerHTML = '<strong>클릭</strong>하거나 파일을 여기에 끌어다 놓으세요';
+  document.getElementById('file-replace-row').style.display = 'none';
+  document.getElementById('file-status').textContent = '';
+  document.getElementById('file-input').value = ''; // 파일 인풋도 초기화
+}
+
+// ── 화면 전환 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('test-screen').style.display = 'none';
+  document.getElementById(id).classList.add('active');
+}
+function goToUpload() {
+  if (selectedFrontRows.length === 0) {
+    alert('첫 번째 행을 1개 이상 선택해주세요.'); return;
+  }
+  if (counts.sang + counts.jung + counts.ha === 0) {
+    alert('단어 수를 1개 이상 설정해주세요.'); return;
+  }
+  showScreen('upload-screen');
+  initSavedBanner();
+}
+function goToSettings() {
+  // 드롭존 초기화
+  const dz = document.getElementById('drop-zone');
+  dz.style.padding = '';
+  const icon = dz.querySelector('.icon');
+  if (icon) icon.style.display = '';
+  const ps = dz.querySelectorAll('p');
+  if (ps[0]) ps[0].innerHTML = '<strong>클릭</strong>하거나 파일을 여기에 끌어다 놓으세요';
+  document.getElementById('file-replace-row').style.display = 'none';
+  document.getElementById('file-status').textContent = '';
+  // generate-btn은 파일 업로드 여부와 관계없이 활성화될 수 있도록 disabled 초기화 (내부 DB 사용)
+  document.getElementById('generate-btn').disabled = false;
+  document.getElementById('file-input').value = '';
+  wordData = { sang: [], jung: [], ha: [] }; // settings로 돌아가면 업로드 데이터 초기화
+  showScreen('settings-screen');
+}
+
+// ── 파일 업로드 ──
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
-// 4. 단어 랜덤 추출 및 표시
-function drawWords() {
-  const sN = document.getElementById('in-sang').value;
-  const jN = document.getElementById('in-jung').value;
-  const hN = document.getElementById('in-ha').value;
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const wb = XLSX.read(ev.target.result, { type: 'binary' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    wordData = { sang: [], jung: [], ha: [] };
+    rows.forEach(row => {
+      if (row[0]) wordData.sang.push(String(row[0]).trim());
+      if (row[1]) wordData.jung.push(String(row[1]).trim());
+      if (row[2]) wordData.ha.push(String(row[2]).trim());
+    });
+    // 엑셀 헤더(예: '상', '중', '하')가 데이터로 들어가는 것을 방지
+    ['sang','jung','ha'].forEach(k => {
+      // 첫 번째 요소가 난이도명(한글 또는 영문 대소문자)과 일치하면 제거
+      if (wordData[k].length && ['상','중','하','A','B','C','a','b','c'].includes(wordData[k][0]))
+        wordData[k].shift();
+    });
 
-  const shuffle = (arr, n) => [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
+    const status = document.getElementById('file-status');
+    const replaceRow = document.getElementById('file-replace-row');
+    const ok = wordData.sang.length >= counts.sang
+            && wordData.jung.length >= counts.jung
+            && wordData.ha.length  >= counts.ha;
+    if (!ok) {
+      status.style.color = '#e74c3c';
+      status.textContent = `⚠️ 업로드: 상 ${wordData.sang.length}개, 중 ${wordData.jung.length}개, 하 ${wordData.ha.length}개 (설정: 상 ${counts.sang}/중 ${counts.jung}/하 ${counts.ha}개 필요)`;
+      document.getElementById('generate-btn').disabled = true;
+      replaceRow.style.display = 'block';
+    } else {
+      status.style.color = 'var(--green-dark)';
+      status.textContent = `✅ ${file.name} — 상 ${wordData.sang.length}개, 중 ${wordData.jung.length}개, 하 ${wordData.ha.length}개`;
+      document.getElementById('generate-btn').disabled = false;
+      // 드롭존 축소 + 파일 변경 버튼 표시
+      const dz = document.getElementById('drop-zone');
+      dz.style.padding = '14px 20px';
+      dz.querySelector('.icon').style.display = 'none';
+      dz.querySelector('p').textContent = '파일이 업로드되었습니다';
+      replaceRow.style.display = 'block';
+      // localStorage에 저장
+      try {
+        localStorage.setItem('gana_wordData', JSON.stringify(wordData));
+        localStorage.setItem('gana_fileName', file.name);
+        const savedBanner = document.getElementById('saved-banner');
+        if (savedBanner) savedBanner.style.display = 'none';
+      } catch(e) {}
+    }
+  };
+  reader.readAsBinaryString(file);
+}
 
-  document.getElementById('area-sang').innerHTML = shuffle(rawData.sang, sN).map(w => `<div class="word-box">${w}</div>`).join('');
-  document.getElementById('area-jung').innerHTML = shuffle(rawData.jung, jNum=jN).map(w => `<div class="word-box">${w}</div>`).join('');
-  document.getElementById('area-ha').innerHTML = shuffle(rawData.ha, hN).map(w => `<div class="word-box">${w}</div>`).join('');
+// ── pick ──
+function pick(arr, n) {
+  const copy = [...arr], result = [];
+  while (result.length < n && copy.length) {
+    const i = Math.floor(Math.random() * copy.length);
+    result.push(copy.splice(i, 1)[0]);
+  }
+  return result;
+}
+
+// ── 문제 생성 (초기 빈 화면) ──
+function generateTest() {
+  if (selectedFrontRows.length === 0) {
+    alert('첫 번째 행을 1개 이상 선택해주세요.');
+    return;
+  }
+
+  // 업로드된 데이터가 없거나, 설정된 개수를 충족하지 못하면 내부 DB 사용
+  const hasEnoughUploadedData = wordData.sang.length >= counts.sang
+                             && wordData.jung.length >= counts.jung
+                             && wordData.ha.length  >= counts.ha;
+  
+  if (!hasEnoughUploadedData) {
+    // 내부 DB를 사용하기 전에 wordData를 초기화 (이전 업로드 데이터가 남아있을 수 있으므로)
+    wordData = JSON.parse(JSON.stringify(INTERNAL_DB[currentScript]));
+    console.log("Uploaded data insufficient or empty, using internal database.");
+  } else {
+    console.log("Using uploaded data.");
+  }
+
+  // Q1 배지 — 빈칸으로
+  document.getElementById('q1-badges-inline').innerHTML =
+    `<span class="row-badge-inline blank-badge">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+     <span class="row-badge-inline blank-badge">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>`;
+
+  // Q2 단어 카드 — 빈칸으로
+  const total = counts.sang + counts.jung + counts.ha;
+  const nums = ['①','②','③','④','⑤','⑥','⑦','⑧'];
+  const gridEl = document.getElementById('q2-word-grid');
+  gridEl.innerHTML = '';
+  gridEl.className = 'word-grid';
+  if (total <= 2) gridEl.classList.add('cols-2');
+  else if (total === 3) gridEl.classList.add('cols-3');
+  else if (total === 4) gridEl.classList.add('cols-4');
+
+  for (let i = 0; i < total; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'word-card-wrap';
+    wrap.innerHTML = `
+      <div class="word-num">${nums[i] || (i+1)}</div>
+      <div class="word-card blank-card"><div class="word-korean"></div></div>
+    `;
+    gridEl.appendChild(wrap);
+  }
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('test-screen').style.display = 'flex';
+  window.scrollTo(0, 0);
+}
+
+// ── Click Here → 랜덤 내용 채우기 ──
+function revealTest() {
+  const currentRows = ROWS_MAP[currentScript];
+  const frontPool = selectedFrontRows.map(name => ({name}));
+  const frontRow = pick(frontPool, 1)[0];
+  const backPool = currentRows.filter(r => !selectedFrontRows.includes(r)).map(name => ({name}));
+  const backRow = backPool.length > 0 ? pick(backPool, 1)[0] : {name: '—'};
+
+  // Q1 배지 채우기
+  document.getElementById('q1-badges-inline').innerHTML =
+    `<span class="row-badge-inline ${frontRow.name.length > 2 ? 'long' : ''}">${frontRow.name}</span>
+     <span class="row-badge-inline ${backRow.name.length > 2 ? 'long' : ''}">${backRow.name}</span>`;
+
+  // Q2 단어 채우기
+  const allWords = [
+    ...pick(wordData.ha,   counts.ha),
+    ...pick(wordData.jung, counts.jung),
+    ...pick(wordData.sang, counts.sang),
+  ];
+
+  const nums = ['①','②','③','④','⑤','⑥','⑦','⑧'];
+  const gridEl = document.getElementById('q2-word-grid');
+  gridEl.innerHTML = '';
+  gridEl.className = 'word-grid';
+  const total = allWords.length;
+  if (total <= 2) gridEl.classList.add('cols-2');
+  else if (total === 3) gridEl.classList.add('cols-3');
+  else if (total === 4) gridEl.classList.add('cols-4');
+
+  allWords.forEach((word, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'word-card-wrap';
+    wrap.innerHTML = `
+      <div class="word-num">${nums[idx] || (idx+1)}</div>
+      <div class="word-card"><div class="word-korean">${word}</div></div>
+    `;
+    gridEl.appendChild(wrap);
+  });
 }
 </script>
 </body>
