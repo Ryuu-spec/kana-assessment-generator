@@ -3,174 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>가나비 AI - 지능형 일본어 에듀테크 툴</title>
+<title>가나비 AI - 지능형 에듀테크 툴</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
   :root { --main-bg: #f5f2e8; --card-bg: #ffffff; --green-btn: #c8ddb0; --green-text: #4a7a32; }
   
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--main-bg); margin: 0; padding: 0; }
-  .screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .screen { display: none; flex-direction: column; align-items: center; padding: 40px 20px; min-height: 100vh; }
   .screen.active { display: flex; }
   
-  /* 기존 디자인 스타일 유지 */
   .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; }
   .btn { background: var(--green-btn); color: var(--green-text); border: none; border-radius: 10px; padding: 15px 30px; font-weight: 700; cursor: pointer; font-size: 1rem; margin: 10px; }
   
-  /* 행 선택 버튼 그룹 */
+  /* 1단계: 행 선택 스타일 */
   .row-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
-  .row-item { padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; }
-  .row-item.selected { background: var(--green-text); color: white; }
+  .row-item { padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; font-weight: bold; }
+  .row-item.selected { background: var(--green-text); color: white; border-color: var(--green-text); }
 
-  /* 엑셀형 테이블 */
+  /* 2단계: 엑셀 분석 테이블 */
   .excel-view { width: 100%; border-collapse: collapse; margin-top: 20px; }
   .excel-view th { background: #eee; border: 1px solid #ccc; padding: 10px; }
-  .excel-view td { border: 1px solid #ccc; padding: 10px; height: 30px; font-size: 0.9rem; }
-  .status-ai { background-color: #fff9c4; border: 2px solid #fbc02d !important; }
-  .ai-msg { font-size: 0.75rem; color: #d32f2f; display: block; font-weight: bold; margin-top: 5px; }
+  .excel-view td { border: 1px solid #ccc; padding: 12px; font-size: 0.95rem; }
 
-  /* 에듀테크 인쇄 레이아웃 */
-  .print-tool-view { text-align: left; padding: 20px; border: 2px solid var(--green-text); border-radius: 15px; background: white; width: 100%; }
-  .tool-header { border-bottom: 2px solid var(--green-text); padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-
-  @media print {
-    .btn, input, #file-input { display: none !important; }
-    .screen { display: block; padding: 0; }
-    .card { box-shadow: none; border: none; max-width: 100%; }
-  }
+  /* 3단계: 대시보드 레이아웃 */
+  .difficulty-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
+  .level-box { padding: 20px; border-radius: 15px; background: #f9fdf5; border: 2px solid var(--green-btn); }
+  .level-title { font-weight: 900; color: var(--green-text); margin-bottom: 15px; border-bottom: 2px solid var(--green-btn); padding-bottom: 5px; font-size: 1.2rem; }
+  .word-display { font-size: 1.8rem; font-weight: 900; color: #333; margin: 15px 0; padding: 15px; background: white; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee; }
 </style>
 </head>
 <body>
 
 <div id="step1" class="screen active">
   <div class="card">
-    <h2 style="color:var(--green-text)">1. 출제 범위 및 문항 설정</h2>
+    <h1 style="color:var(--green-text)">가나비 AI 평가 설정</h1>
+    <p>1. 출제 범위를 선택하세요 (1번 문제용)</p>
     <div class="row-group" id="row-btns"></div>
-    <div style="margin: 20px 0;">
-      상: <input type="number" id="cnt-sang" value="1" style="width:40px"> 
-      중: <input type="number" id="cnt-jung" value="2" style="width:40px"> 
-      하: <input type="number" id="cnt-ha" value="1" style="width:40px">
+    <p>2. 난이도별 표시 단어 개수를 설정하세요 (2번 문제용)</p>
+    <div style="margin: 15px 0;">
+      상: <input type="number" id="cnt-sang" value="1" style="width:50px"> 
+      중: <input type="number" id="cnt-jung" value="2" style="width:50px"> 
+      하: <input type="number" id="cnt-ha" value="1" style="width:50px">
     </div>
-    <button class="btn" onclick="showScreen('step2')">다음: 엑셀 데이터 업로드</button>
+    <button class="btn" onclick="showScreen('step2')">다음: 데이터 업로드</button>
   </div>
 </div>
 
 <div id="step2" class="screen">
   <div class="card">
-    <h2 style="color:var(--green-text)">2. 데이터 분석 및 AI 검수</h2>
-    <p>분류된 엑셀 파일을 업로드하세요.</p>
+    <h2 style="color:var(--green-text)">데이터 분석 엔진</h2>
+    <p>업로드하신 엑셀의 상/중/하 데이터를 확인합니다.</p>
     <input type="file" id="file-input" accept=".xlsx, .xls, .csv" onchange="handleExcel(event)">
-    
     <table class="excel-view">
-      <thead>
-        <tr><th>상 (A열)</th><th>중 (B열)</th><th>하 (C열)</th></tr>
-      </thead>
+      <thead><tr><th>상 (A열)</th><th>중 (B열)</th><th>하 (C열)</th></tr></thead>
       <tbody id="excel-body">
-        <tr><td colspan="3" style="padding:40px; color:#999;">파일을 선택하면 분석 테이블이 생성됩니다.</td></tr>
+        <tr><td colspan="3" style="padding:40px; color:#999;">파일을 업로드하면 테이블이 생성됩니다.</td></tr>
       </tbody>
     </table>
-    <button class="btn" id="gen-btn" disabled onclick="generateResult()">에듀테크 리포트 생성</button>
+    <button class="btn" id="gen-btn" disabled onclick="generateDashboard()">에듀테크 툴 실행</button>
   </div>
 </div>
 
 <div id="step3" class="screen">
-  <div class="card">
-    <div class="print-tool-view">
-      <div class="tool-header">
-        <h2 style="margin:0;">가나비 AI 평가 설계 리포트</h2>
-        <span>Status: AI Verified ✅</span>
-      </div>
-      <p><strong>발행 일시:</strong> <span id="p-date"></span></p>
-      <p><strong>출제 범위:</strong> <span id="p-rows"></span></p>
-      <hr>
-      <h3>📊 난이도별 단어 구성 내역</h3>
-      <div id="p-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
-    </div>
-    <button class="btn" onclick="window.print()">이 리포트 인쇄하기</button>
-    <button class="btn" onclick="location.reload()" style="background:#666; color:white;">설정 초기화</button>
-  </div>
-</div>
-
-<script>
-const wordDB = {"병원":"びょういん","학교":"がっ코う","도서관":"としょかん","우체국":"ゆうびんきょく","고등학교":"こうとうがっこう","모자":"ぼうし","우표":"きって","수학":"すうがく","공원":"こうえん","오후":"고ご","야구":"やきゅう","가족":"가ぞく","가방":"かばん","책":"ほん","의자":"いす","창문":"마ど","산책":"さんぽ","책상":"つくえ"};
-let uploadedWords = {sang:[], jung:[], ha:[]};
-let selectedRows = [];
-
-// 행 버튼 동적 생성
-const rows = ['아','카','사','타','나','하','마','라','야','와'];
-const btnContainer = document.getElementById('row-btns');
-btnContainer.innerHTML = rows.map(r => `<div class="row-item" onclick="toggleRow(this, '${r}')">${r}행</div>`).join('');
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function toggleRow(el, r) {
-  el.classList.toggle('selected');
-  if(selectedRows.includes(r)) selectedRows = selectedRows.filter(i => i !== r);
-  else selectedRows.push(r);
-}
-
-function handleExcel(e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const data = evt.target.result;
-    const workbook = XLSX.read(data, {type: 'binary'});
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rowsArr = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});
-
-    const body = document.getElementById('excel-body');
-    body.innerHTML = "";
-    uploadedWords = {sang:[], jung:[], ha:[]};
-
-    rowsArr.slice(1).forEach(row => {
-      const tr = document.createElement('tr');
-      [0,1,2].forEach(i => {
-        const td = document.createElement('td');
-        const word = row[i] ? String(row[i]).trim() : "";
-        td.textContent = word;
-        
-        if(word) {
-          const type = i===0?'sang':i===1?'jung':'ha';
-          const kana = wordDB[word];
-          if(kana) {
-            const mora = kana.replace(/[ゃゅょ]/g, "").length;
-            const ai = mora >= 4 ? 'sang' : (mora === 3 ? 'jung' : 'ha');
-            if(ai !== type) {
-              td.className = "status-ai";
-              td.innerHTML += `<span class="ai-msg">AI추천: ${ai==='sang'?'상':ai==='jung'?'중':'하'}</span>`;
-            }
-          }
-          uploadedWords[type].push(word);
-        }
-        tr.appendChild(td);
-      });
-      body.appendChild(tr);
-    });
-    document.getElementById('gen-btn').disabled = false;
-  };
-  reader.readAsBinaryString(file);
-}
-
-function generateResult() {
-  document.getElementById('p-date').innerText = new Date().toLocaleString();
-  document.getElementById('p-rows').innerText = selectedRows.join(', ') + " 행";
-  
-  const sCnt = parseInt(document.getElementById('cnt-sang').value);
-  const jCnt = parseInt(document.getElementById('cnt-jung').value);
-  const hCnt = parseInt(document.getElementById('cnt-ha').value);
-
-  const final = [
-    ...uploadedWords.sang.slice(0, sCnt).map(w => `[상] ${w}`),
-    ...uploadedWords.jung.slice(0, jCnt).map(w => `[중] ${w}`),
-    ...uploadedWords.ha.slice(0, hCnt).map(w => `[하] ${w}`)
-  ];
-
-  document.getElementById('p-grid').innerHTML = final.map(w => `<div style="padding:10px; border:1px solid #ddd;">${w}</div>`).join('');
-  showScreen('step3');
-}
-</script>
-</body>
-</html>
