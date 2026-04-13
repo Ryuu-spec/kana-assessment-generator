@@ -866,11 +866,12 @@ function buildRandom(){
   const sangPool=ST.words.filter(w=>w.diff==="sang");
   const jungPool=ST.words.filter(w=>w.diff==="jung");
   const haPool  =ST.words.filter(w=>w.diff==="ha");
-  const picked=shuffle([
-    ...pick(sangPool, Math.min(ST.counts.sang, sangPool.length)),
-    ...pick(jungPool, Math.min(ST.counts.jung, jungPool.length)),
+  // 하→중→상 순서 (쉬운 단어에서 어려운 단어로)
+  const picked=[
     ...pick(haPool,   Math.min(ST.counts.ha,   haPool.length)),
-  ]);
+    ...pick(jungPool, Math.min(ST.counts.jung, jungPool.length)),
+    ...pick(sangPool, Math.min(ST.counts.sang, sangPool.length)),
+  ];
 
   if(picked.length>=total){
     // 정상: 분류된 단어가 충분
