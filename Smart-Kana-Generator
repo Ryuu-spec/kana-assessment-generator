@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>일본어 쓰기 수행평가 툴</title>
+<title>일본어 문자 쓰기 수행평가 툴</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -24,8 +24,8 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 
 /* ── 헤더 ── */
 .hdr{background:var(--green-d);color:#fff;padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;}
-.hdr .brand{font-size:1.15rem;font-weight:900;letter-spacing:-0.3px;}
-.hdr .step{margin-left:auto;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;}
+.hdr .brand{font-size:1.15rem;font-weight:900;letter-spacing:-0.3px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr .step{margin-left:auto;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;flex-shrink:0;white-space:nowrap;}
 
 /* ── 공통 ── */
 .cwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:18px;}
@@ -249,6 +249,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 /* ══ 반응형 ══ */
 /* 태블릿 (768~1200px) */
 @media(max-width:1200px){
+  .hdr{padding:0 12px;gap:7px;}
   .tool-title{font-size:clamp(1.4rem,5vw,3.8rem);}
   .q-bookmark{width:clamp(24px,2.8vw,42px);}
   .q1-label-txt,.q1-suffix{font-size:clamp(0.9rem,2.2vw,1.8rem);}
@@ -263,6 +264,13 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 
 /* 모바일/핸드폰 (≤768px) */
 @media(max-width:768px){
+  /* 헤더 반응형 */
+  .hdr{padding:0 10px;gap:6px;}
+  .hdr .brand{font-size:0.9rem;}
+  .hdr .step{display:none;}
+  /* 헤더 내 버튼 (inline style 덮어쓰기) */
+  .hdr .btn{font-size:.68rem !important;padding:4px 8px !important;}
+
   #screen-tool.active{height:auto;min-height:100svh;}
   .tool-body{padding:12px 16px;gap:10px;justify-content:flex-start;overflow-y:auto;}
   .tool-title{font-size:clamp(1.3rem,6vw,2.4rem);}
@@ -289,6 +297,9 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 
 /* 소형 폰 (≤480px) */
 @media(max-width:480px){
+  .hdr{padding:0 8px;gap:4px;}
+  .hdr .brand{display:none;}
+  .hdr .btn{font-size:.62rem !important;padding:3px 7px !important;}
   .tool-title{font-size:1.3rem;}
   .words-row{grid-template-columns:1fr !important;}
 }
@@ -315,12 +326,12 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 <!-- ══ S1: 문자 선택 ══ -->
 <div id="screen-select" class="screen active">
   <div class="hdr">
-    <span class="brand">일본어 쓰기 수행평가 툴</span>
+    <span class="brand">일본어 문자 쓰기 수행평가 툴</span>
     <span class="step">문자 선택</span>
   </div>
   <div class="cwrap">
     <div class="hero">
-      <h1>일본어 쓰기 수행평가 툴</h1>
+      <h1>일본어 문자 쓰기 수행평가 툴</h1>
       <p>2022 개정 교육과정 어휘 DB 내장 · 히라가나 / 가타카나</p>
     </div>
 
@@ -353,7 +364,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 <!-- ══ S2: 설정 ══ -->
 <div id="screen-settings" class="screen">
   <div class="hdr">
-    <span class="brand">일본어 쓰기 수행평가 툴</span>
+    <span class="brand">일본어 문자 쓰기 수행평가 툴</span>
     <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="goScreen('screen-select')">← 문자 선택</button>
     <span class="step" id="settings-lbl">설정</span>
   </div>
@@ -428,7 +439,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 <!-- ══ S3: 단어 입력 (드래그앤드롭) ══ -->
 <div id="screen-words" class="screen">
   <div class="hdr">
-    <span class="brand">일본어 쓰기 수행평가 툴</span>
+    <span class="brand">일본어 문자 쓰기 수행평가 툴</span>
     <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="goScreen('screen-settings')">← 설정</button>
     <span class="step">단어 입력</span>
   </div>
@@ -499,7 +510,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 <!-- ══ S4: 수행평가 툴 ══ -->
 <div id="screen-tool" class="screen">
   <div class="hdr">
-    <span class="brand">일본어 쓰기 수행평가 툴</span>
+    <span class="brand">일본어 문자 쓰기 수행평가 툴</span>
     <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="goScreen('screen-words')">← 단어 입력</button>
     <button class="btn btn-ol" style="font-size:.74rem;padding:5px 10px;border-color:rgba(255,255,255,.4);color:#fff;background:transparent;" onclick="reGenerate()">🔀 재생성</button>
     <span class="step">수행평가 툴</span>
