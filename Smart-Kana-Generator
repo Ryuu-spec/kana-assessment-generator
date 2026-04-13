@@ -4,17 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>일본어 문자 쓰기 수행평가 툴</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#f5f2e8;--card:#fff;
-  --green-l:#c8ddb0;--green-d:#5a8a3c;--green-t:#4a7a32;
-  --text:#2d2d2d;--text-l:#666;--border:#d0c9b0;
-  --red:#c0392b;--red-bg:#fdf2f0;
-  --amber:#d68910;--amber-bg:#fdf8ec;
-  --green:#1e8449;--green-bg:#edfaf3;
-  --sh:0 2px 12px rgba(0,0,0,.08);
+  --bg:#f7f4ed;--card:#fff;
+  --green-l:#c6dca8;--green-d:#4f7e35;--green-t:#3d6428;
+  --green-m:#6da048;
+  --text:#2a2a2a;--text-l:#717171;--border:#ddd7c5;
+  --red:#b83228;--red-bg:#fdf1ef;
+  --amber:#c47d0e;--amber-bg:#fdf7e8;
+  --green:#1a7d42;--green-bg:#edf9f2;
+  --sh:0 2px 16px rgba(0,0,0,.07);
+  --sh2:0 4px 20px rgba(0,0,0,.1);
+  --r:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
@@ -23,66 +26,68 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 .screen.active{display:flex;flex-direction:column;min-height:100vh;}
 
 /* ── 헤더 ── */
-.hdr{background:var(--green-d);color:#fff;padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;}
-.hdr .brand{font-size:1.15rem;font-weight:900;letter-spacing:-0.3px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.hdr .step{margin-left:auto;font-size:.68rem;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;flex-shrink:0;white-space:nowrap;}
+.hdr{background:var(--green-d);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;border-bottom:1px solid rgba(0,0,0,.12);}
+.hdr .brand{font-size:1.05rem;font-weight:700;letter-spacing:-0.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.95;}
+.hdr .step{margin-left:auto;font-size:.66rem;font-weight:700;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:20px;letter-spacing:.8px;flex-shrink:0;white-space:nowrap;}
 
 /* ── 공통 ── */
-.cwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:18px;}
-.card{background:var(--card);border-radius:16px;box-shadow:var(--sh);padding:22px 26px;width:100%;}
-.ctitle{font-size:.68rem;font-weight:700;color:var(--text-l);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
-.ctitle::before{content:"";width:3px;height:12px;background:var(--green-d);border-radius:2px;display:inline-block;}
+.cwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:20px;}
+.card{background:var(--card);border-radius:20px;border:1px solid #e8e3d5;box-shadow:var(--sh);padding:22px 26px;width:100%;transition:box-shadow .2s;}
+.ctitle{font-size:.68rem;font-weight:700;color:var(--text-l);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ctitle .step-badge{width:22px;height:22px;border-radius:50%;background:var(--green-l);color:var(--green-t);font-size:.72rem;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ctitle::before{display:none;}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 18px;border:none;border-radius:9px;font-size:.86rem;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 18px;border:none;border-radius:12px;font-size:.86rem;font-weight:700;font-family:inherit;cursor:pointer;transition:all .18s;}
 .btn-green{background:var(--green-l);color:var(--green-t);}
-.btn-green:hover{background:#b0cc98;}
+.btn-green:hover{background:#b8cf9a;transform:translateY(-1px);}
 .btn-dark{background:var(--green-d);color:#fff;}
-.btn-dark:hover{background:#4a7a32;}
+.btn-dark:hover{background:var(--green-t);transform:translateY(-2px);box-shadow:0 6px 16px rgba(79,126,53,.28);}
 .btn-ol{background:#fff;color:var(--text);border:1.5px solid var(--border);}
 .btn-ol:hover{border-color:var(--green-d);color:var(--green-d);}
 .btn-full{width:100%;}
-.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none !important;}
 
 /* ══ S1: 문자 선택 ══ */
 .hero{text-align:center;}
 .hero h1{font-size:2rem;font-weight:900;margin-bottom:6px;color:var(--green-d);}
 .hero p{color:var(--text-l);font-size:.86rem;}
-.script-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px;}
-.script-btn{background:#fff;border:2px solid var(--border);border-radius:14px;padding:24px 14px;cursor:pointer;text-align:center;transition:all .18s;font-family:inherit;}
-.script-btn:hover{border-color:var(--green-d);background:#f0f7e8;transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08);}
-.script-btn .kana{font-family:"Noto Sans JP",serif;font-size:2.4rem;color:var(--green-d);display:block;margin-bottom:6px;}
-.script-btn .lbl{font-size:.92rem;font-weight:700;display:block;}
-.script-btn .sub{font-size:.7rem;color:var(--text-l);margin-top:3px;display:block;}
+.script-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:440px;}
+.script-btn{background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:32px 20px;cursor:pointer;text-align:center;transition:all .25s ease;font-family:inherit;display:flex;flex-direction:column;align-items:center;}
+.script-btn:hover{border-color:var(--green-d);background:#f4f9ee;transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,0,0,.07);}
+.script-btn .kana{font-family:"Klee One","Noto Sans JP",serif;font-size:3.2rem;color:var(--green-d);display:block;margin-bottom:10px;transition:transform .25s ease;line-height:1;}
+.script-btn:hover .kana{transform:scale(1.1);}
+.script-btn .lbl{font-size:.96rem;font-weight:700;display:block;}
+.script-btn .sub{font-size:.72rem;color:var(--text-l);margin-top:4px;display:block;letter-spacing:.8px;}
 
 /* ══ S2: 설정 ══ */
 .row-btn-group{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;}
 .row-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--text-l);font-size:.8rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all .12s;}
 .row-btn:hover{border-color:var(--green-d);color:var(--green-d);}
 .row-btn.on{border-color:var(--green-l);background:var(--green-l);color:var(--green-t);}
-.info-box{background:#f0f7e8;border-radius:8px;padding:8px 12px;font-size:.74rem;color:var(--text-l);line-height:1.7;margin-top:6px;}
+.info-box{background:#f1f8e9;border-radius:12px;padding:9px 13px;font-size:.74rem;color:var(--text-l);line-height:1.7;margin-top:6px;border:1px solid #d5e8bc;}
 .info-box strong{color:var(--green-d);}
 
 .stepper-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
-.sitem{background:var(--bg);border-radius:10px;border:1.5px solid var(--border);padding:10px 8px;text-align:center;}
+.sitem{background:var(--bg);border-radius:14px;border:1.5px solid var(--border);padding:12px 8px;text-align:center;}
 .sitem.sang{border-color:#f5c6c2;background:var(--red-bg);}
 .sitem.jung{border-color:#f9e4a0;background:var(--amber-bg);}
 .sitem.ha  {border-color:#a9dfbf;background:var(--green-bg);}
-.slbl{font-size:.76rem;font-weight:700;margin-bottom:7px;display:flex;align-items:center;justify-content:center;gap:4px;}
+.slbl{font-size:.76rem;font-weight:700;margin-bottom:9px;display:flex;align-items:center;justify-content:center;gap:4px;}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 .dot.sang{background:var(--red);}
 .dot.jung{background:var(--amber);}
 .dot.ha  {background:var(--green);}
 .sctl{display:flex;align-items:center;justify-content:center;gap:6px;}
-.sbtn{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:1rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;}
+.sbtn{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:1rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
 .sbtn:hover{background:var(--green-d);color:#fff;border-color:var(--green-d);}
-.sval{font-size:1.4rem;font-weight:900;min-width:20px;text-align:center;}
-.tnote{text-align:center;font-size:.74rem;color:var(--text-l);margin-top:7px;}
+.sval{font-size:1.5rem;font-weight:900;min-width:24px;text-align:center;}
+.tnote{text-align:center;font-size:.74rem;color:var(--text-l);margin-top:10px;}
 .tnote b{color:var(--green-d);}
 .sdivider{border:none;border-top:1px solid var(--border);margin:16px 0;}
 
 /* ══ 행 선택기 (새 UI) ══ */
 .row-selector{display:flex;flex-direction:column;gap:10px;}
-.rs-zone{border-radius:12px;padding:10px 12px;border:2px solid transparent;transition:all .2s;}
+.rs-zone{border-radius:16px;padding:12px 14px;border:2px solid transparent;transition:all .2s;}
 .rs-zone.zone1{background:#eef7e4;border-color:var(--green-l);}
 .rs-zone.zone2{background:#f0f4ff;border-color:#b8c8f0;}
 .rs-zone-label{font-size:.72rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
@@ -124,8 +129,8 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 
 /* 칸반 보드 */
 .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1;min-height:0;}
-.kb-col{background:#fff;border-radius:12px;border:2px solid var(--border);display:flex;flex-direction:column;min-height:160px;transition:border-color .2s;}
-.kb-col.drag-over{border-color:var(--green-d);background:#f0f7e8;}
+.kb-col{background:#fff;border-radius:16px;border:1.5px solid var(--border);display:flex;flex-direction:column;min-height:160px;transition:border-color .2s,background .2s;}
+.kb-col.drag-over{border-color:var(--green-d);background:#f4f9ee;}
 .kb-head{padding:10px 12px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .kb-title{font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:5px;}
 .kb-count{font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:10px;}
@@ -142,12 +147,12 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 .kb-empty{text-align:center;padding:16px 8px;color:#ccc;font-size:.72rem;}
 
 /* 단어 카드 */
-.dcard{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:7px 9px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;transition:all .15s;}
+.dcard{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:7px 9px;display:flex;align-items:center;justify-content:space-between;cursor:grab;user-select:none;transition:all .15s;}
 .dcard:active{cursor:grabbing;}
 .dcard.dragging{opacity:.4;transform:scale(.96);}
 .dcard.needs{border-color:#f39c12;background:#fffbf0;}
 .dc-kr{font-size:.84rem;font-weight:600;}
-.dc-jp{font-size:.72rem;color:var(--text-l);font-family:"Noto Sans JP",sans-serif;}
+.dc-jp{font-size:.78rem;color:var(--text-l);font-family:"Klee One","Noto Sans JP",sans-serif;}
 .dc-main{display:flex;flex-direction:row;align-items:center;gap:6px;}
 .dc-right{display:flex;align-items:center;gap:4px;}
 .dc-db{font-size:.6rem;}
@@ -158,14 +163,21 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 .unassigned-col{background:#fffbf0;border-color:#f39c12;}
 
 /* 하단 고정 입력창 */
-.bottom-input{background:#fff;border-top:1.5px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.bottom-input{background:#fff;border-top:1px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
 .bi-row{display:flex;gap:8px;align-items:stretch;}
-.tinput{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.86rem;font-family:inherit;background:var(--bg);color:var(--text);transition:border-color .15s;}
+.tinput{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:12px;font-size:.86rem;font-family:inherit;background:var(--bg);color:var(--text);transition:border-color .15s;}
 .tinput:focus{outline:none;border-color:var(--green-d);background:#fff;}
 .tinput::placeholder{color:#bbb;}
 .bi-bottom{display:flex;gap:8px;align-items:center;}
-.upload-zone{flex:1;border:1.5px dashed var(--border);border-radius:8px;padding:7px 12px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);font-size:.74rem;color:var(--text-l);}
-.upload-zone:hover{border-color:var(--green-d);background:#f0f7e8;color:var(--green-d);}
+.upload-zone{
+  flex:1;border:2px dashed #c6dca8;border-radius:12px;
+  padding:9px 14px;text-align:center;cursor:pointer;
+  transition:all .2s;background:rgba(198,220,168,.08);
+  font-size:.78rem;color:var(--text-l);font-weight:500;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.upload-zone:hover{border-color:var(--green-d);background:rgba(198,220,168,.2);color:var(--green-d);}
+.upload-zone::before{content:"↑";font-size:1rem;opacity:.6;}
 .hint{font-size:.68rem;color:var(--text-l);}
 .word-count-badge{font-size:.72rem;color:var(--text-l);white-space:nowrap;}
 .word-count-badge b{color:var(--green-d);}
@@ -305,9 +317,9 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
 }
 
 .save-banner{
-  background:#fff;border-radius:14px;box-shadow:var(--sh);
-  padding:16px 20px;width:100%;max-width:420px;
-  border:2px solid var(--green-l);
+  background:#fff;border-radius:20px;box-shadow:var(--sh);
+  padding:18px 22px;width:100%;max-width:440px;
+  border:1.5px solid var(--green-l);
 }
 .save-banner-title{font-size:.72rem;font-weight:700;color:var(--text-l);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .save-info{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
@@ -349,15 +361,15 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
       <button class="script-btn" onclick="selectScript('hiragana')">
         <span class="kana">あ</span>
         <span class="lbl">히라가나</span>
-        <span class="sub">あいうえお</span>
+        <span class="sub">HIRAGANA</span>
       </button>
       <button class="script-btn" onclick="selectScript('katakana')">
         <span class="kana">ア</span>
         <span class="lbl">가타카나</span>
-        <span class="sub">アイウエオ</span>
+        <span class="sub">KATAKANA</span>
       </button>
     </div>
-    <div style="font-size:.72rem;color:var(--text-l);">↑ 새로 시작할 문자 선택</div>
+    <div style="font-size:.72rem;color:var(--text-l);">평가 대상 문자를 선택하세요</div>
   </div>
 </div>
 
@@ -371,7 +383,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
   <div class="cwrap" style="max-width:560px;margin:0 auto;width:100%;">
 
     <div class="card" style="max-width:520px;width:100%;">
-      <div class="ctitle">문제 1 — 행 범위 설정</div>
+      <div class="ctitle"><span class="step-badge">1</span>행 범위 설정</div>
       <div style="font-size:.74rem;color:var(--text-l);margin-bottom:12px;">행 이름을 클릭하면 ①행 ↔ ②행 구역을 바꿀 수 있어요. 출제 시 각 구역에서 1행씩 랜덤 선택됩니다.</div>
 
       <div class="row-selector">
@@ -400,7 +412,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
     </div>
 
     <div class="card" style="max-width:520px;width:100%;">
-      <div class="ctitle">문제 2 — 난이도별 문항 수</div>
+      <div class="ctitle"><span class="step-badge">2</span>난이도별 문항 수</div>
       <div class="stepper-row">
         <div class="sitem sang">
           <div class="slbl"><span class="dot sang"></span> 상</div>
@@ -499,7 +511,7 @@ body{font-family:"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text
       <button class="btn btn-dark" onclick="addWord()">추가</button>
     </div>
     <div class="bi-bottom">
-      <div class="upload-zone" onclick="document.getElementById('xl-input').click()">📂 엑셀 업로드 (A=상 B=중 C=하)</div>
+      <div class="upload-zone" onclick="document.getElementById('xl-input').click()">엑셀 업로드 · A열=상 B열=중 C열=하</div>
       <input type="file" id="xl-input" accept=".xlsx,.xls" style="display:none">
       <span class="word-count-badge">등록 <b id="word-count">0</b>개</span>
       <button class="btn btn-ol" style="font-size:.68rem;padding:4px 8px;" onclick="clearWords()">전체 삭제</button>
