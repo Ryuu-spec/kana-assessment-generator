@@ -74,9 +74,9 @@ body{font-family:"Jeju Gothic",sans-serif;background:var(--bg);color:var(--text)
 .sitem.ha  {border-color:#a9dfbf;background:var(--green-bg);}
 .slbl{font-size:.8rem;font-weight:700;margin-bottom:0;display:flex;align-items:center;gap:4px;}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
-.dot.sang{background:#d9534f;}
-.dot.jung{background:#4a90d9;}
-.dot.ha  {background:#4aaa6e;}
+.dot.sang{background:var(--red);}
+.dot.jung{background:var(--amber);}
+.dot.ha  {background:var(--green);}
 .sctl{display:flex;align-items:center;justify-content:center;gap:5px;}
 .sbtn{width:32px;height:32px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:1.1rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;}
 .sbtn:hover{background:var(--green-d);color:#fff;border-color:var(--green-d);}
@@ -147,9 +147,9 @@ body{font-family:"Jeju Gothic",sans-serif;background:var(--bg);color:var(--text)
 /* 상단 현황 바 */
 .status-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .sb-item{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:.78rem;font-weight:700;}
-.sb-item.sang{background:#fddede;color:#c0392b;}
-.sb-item.jung{background:#ddeafc;color:#2e6fba;}
-.sb-item.ha{background:#d6f0e3;color:#27804e;}
+.sb-item.sang{background:var(--red-bg);color:var(--red);}
+.sb-item.jung{background:var(--amber-bg);color:var(--amber);}
+.sb-item.ha{background:var(--green-bg);color:var(--green);}
 .sb-item .sb-num{font-size:1rem;font-weight:900;}
 .sb-guide{font-size:.72rem;color:var(--text-l);margin-left:auto;white-space:nowrap;}
 .sb-warn{font-size:.72rem;color:#c0392b;font-weight:600;white-space:nowrap;}
@@ -167,9 +167,9 @@ body{font-family:"Jeju Gothic",sans-serif;background:var(--bg);color:var(--text)
   box-shadow:0 2px 8px rgba(0,0,0,.05);
 }
 .kb-col.drag-over{box-shadow:0 0 0 3px rgba(79,126,53,.3);border-color:var(--green-d);}
-.kb-col.sang-col{border-top:4px solid #d9534f;background:#fff0f0;}
-.kb-col.jung-col{border-top:4px solid #4a90d9;background:#f0f5ff;}
-.kb-col.ha-col  {border-top:4px solid #4aaa6e;background:#f0faf4;}
+.kb-col.sang-col{border-top:4px solid var(--red);}
+.kb-col.jung-col{border-top:4px solid var(--amber);}
+.kb-col.ha-col  {border-top:4px solid var(--green);}
 .kb-col.unassigned-col{border-top:4px solid #f39c12;background:#fffbf0;}
 .kb-head{
   padding:11px 14px 9px;
@@ -178,12 +178,12 @@ body{font-family:"Jeju Gothic",sans-serif;background:var(--bg);color:var(--text)
 }
 .kb-title{font-size:.85rem;font-weight:800;display:flex;align-items:center;gap:6px;letter-spacing:-.2px;}
 .kb-count{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;}
-.kb-col.sang-col .kb-title{color:#c0392b;}
-.kb-col.jung-col .kb-title{color:#2e6fba;}
-.kb-col.ha-col   .kb-title{color:#27804e;}
-.kb-col.sang-col .kb-count{background:#fddede;color:#c0392b;}
-.kb-col.jung-col .kb-count{background:#ddeafc;color:#2e6fba;}
-.kb-col.ha-col   .kb-count{background:#d6f0e3;color:#27804e;}
+.kb-col.sang-col .kb-title{color:var(--red);}
+.kb-col.jung-col .kb-title{color:var(--amber);}
+.kb-col.ha-col   .kb-title{color:var(--green);}
+.kb-col.sang-col .kb-count{background:var(--red-bg);color:var(--red);}
+.kb-col.jung-col .kb-count{background:var(--amber-bg);color:var(--amber);}
+.kb-col.ha-col   .kb-count{background:var(--green-bg);color:var(--green);}
 .kb-need{font-size:.68rem;color:var(--text-l);font-weight:500;}
 .kb-cards{flex:1;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:7px;overflow-y:auto;align-content:start;}
 .kb-cards::-webkit-scrollbar{width:3px;}
