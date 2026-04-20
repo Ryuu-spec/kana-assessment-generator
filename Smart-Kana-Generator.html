@@ -320,6 +320,33 @@ body{font-family:"Jeju Gothic",sans-serif;background:var(--bg);color:var(--text)
   color:var(--green-t);line-height:1.2;text-align:center;
 }
 .blank-badge{color:transparent !important;}
+/* 재생 모드 버튼 */
+.btn-play-mode{
+  font-size:.88rem;padding:8px 16px;
+  border-radius:12px;border:2px solid var(--green-d);
+  font-family:inherit;font-weight:700;cursor:pointer;transition:all .18s;
+  white-space:nowrap;
+}
+.btn-play-mode.off{background:#fff;color:var(--green-d);}
+.btn-play-mode.off:hover{background:var(--green-l);}
+.btn-play-mode.on{background:var(--green-d);color:#fff;}
+.btn-play-mode.on:hover{background:var(--green-t);}
+
+/* 재생 모드 단어 카드 */
+.word-card.play-mode{
+  background:var(--green-l);border-color:#a8cc88;
+  cursor:pointer;transition:transform .12s,box-shadow .12s;
+}
+.word-card.play-mode:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(79,126,53,.25);}
+.word-card.play-mode:active{transform:scale(.96);}
+.play-icon{
+  font-size:clamp(1.6rem,4vw,2.8rem);
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;
+}
+.play-icon.playing{animation:pulse .6s ease-in-out infinite alternate;}
+@keyframes pulse{from{transform:scale(1);}to{transform:scale(1.18);}}
+
 /* Click Here 버튼 */
 .click-here-btn{
   align-self:center;
@@ -613,9 +640,12 @@ body{font-family:"Jeju Gothic",sans-serif;background:var(--bg);color:var(--text)
     </div>
     <!-- 문제 2 -->
     <div class="question-block">
-      <div class="q-title-row">
-        <span class="q-label">2</span>
-        <span class="q-instruction" id="q2-text">다음 단어에 해당하는 일본어를 히라가나로 쓰시오.</span>
+      <div class="q-title-row" style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="q-label">2</span>
+          <span class="q-instruction" id="q2-text">다음 단어에 해당하는 일본어를 히라가나로 쓰시오.</span>
+        </div>
+        <button class="btn-play-mode off" id="play-mode-btn" onclick="togglePlayMode()">🔊 재생 모드</button>
       </div>
       <!-- 단어 그리드 -->
       <div class="word-grid" id="words-row"></div>
@@ -665,6 +695,13 @@ function goScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   target.classList.add("active");
   window.scrollTo(0,0);
+  // 툴 화면 벗어나면 재생 모드 초기화
+  if(id !== 'screen-tool' && isPlayMode){
+    isPlayMode = false;
+    window.speechSynthesis.cancel();
+    const btn = document.getElementById('play-mode-btn');
+    if(btn){ btn.className='btn-play-mode off'; btn.textContent='🔊 재생 모드'; }
+  }
 }
 
 // S1
@@ -1066,15 +1103,88 @@ function reveal(){
 
   // Q2 단어 채우기
   const total=ST.counts.sang+ST.counts.jung+ST.counts.ha;
-  ST.selWords.slice(0,total).forEach((w,i)=>{
-    const el=document.getElementById("wc"+i);
-    if(el){el.querySelector(".word-korean").textContent=w.kr||w.jp||"?";}
-  });
+  if(isPlayMode){
+    refreshWordCards();
+  } else {
+    ST.selWords.slice(0,total).forEach((w,i)=>{
+      const el=document.getElementById("wc"+i);
+      if(el){el.querySelector(".word-korean").textContent=w.kr||w.jp||"?";}
+    });
+  }
   const btn=document.getElementById("reveal-btn");
   btn.textContent="🔀 다시 생성";
   btn.onclick=reGenerate;
 }
 
+
+// ══ 재생 모드 ══
+let isPlayMode = false;
+let currentUtterance = null;
+
+function togglePlayMode(){
+  isPlayMode = !isPlayMode;
+  const btn = document.getElementById('play-mode-btn');
+  btn.className = 'btn-play-mode ' + (isPlayMode ? 'on' : 'off');
+  btn.textContent = isPlayMode ? '✕ 재생 모드 끄기' : '🔊 재생 모드';
+  // 현재 표시된 단어 카드 다시 렌더
+  refreshWordCards();
+}
+
+function refreshWordCards(){
+  const total = ST.counts.sang + ST.counts.jung + ST.counts.ha;
+  ST.selWords.slice(0, total).forEach((w, i) => {
+    const el = document.getElementById('wc' + i);
+    if(!el) return;
+    if(isPlayMode){
+      el.className = 'word-card play-mode';
+      el.innerHTML = `<div class="play-icon" id="pi${i}">🔊</div>`;
+      el.onclick = () => speakWord(w.jp || '', i);
+    } else {
+      el.className = 'word-card';
+      el.onclick = null;
+      el.innerHTML = `<div class="word-korean">${w.kr || w.jp || '?'}</div>`;
+    }
+  });
+}
+
+function speakWord(jpText, idx){
+  if(!jpText) return;
+  window.speechSynthesis.cancel();
+
+  const icon = document.getElementById('pi' + idx);
+  if(icon) icon.classList.add('playing');
+
+  const voices = window.speechSynthesis.getVoices();
+  const jpVoice = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Google'))
+    || voices.find(v => v.lang === 'ja-JP')
+    || voices.find(v => v.lang.startsWith('ja'));
+
+  function makeUtter(){
+    const u = new SpeechSynthesisUtterance(jpText);
+    u.lang = 'ja-JP'; u.rate = 0.95; u.pitch = 1.0;
+    if(jpVoice) u.voice = jpVoice;
+    return u;
+  }
+
+  // 1회 재생
+  const utter1 = makeUtter();
+  utter1.onend = () => {
+    // 2.5초 후 2회 재생
+    setTimeout(() => {
+      const utter2 = makeUtter();
+      utter2.onend = () => { if(icon) icon.classList.remove('playing'); };
+      utter2.onerror = () => { if(icon) icon.classList.remove('playing'); };
+      window.speechSynthesis.speak(utter2);
+    }, 1500);
+  };
+  utter1.onerror = () => { if(icon) icon.classList.remove('playing'); };
+
+  currentUtterance = utter1;
+  window.speechSynthesis.speak(utter1);
+}
+
+// 음성 목록 미리 로드 (Chrome 필요)
+window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
 
 // ══ 저장 / 불러오기 ══
 const SAVE_KEY="jpn_tool_save";
